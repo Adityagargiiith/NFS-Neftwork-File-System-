@@ -47,7 +47,7 @@ void delete_from_tree(root_ptr root,char *path);
 
 void remove_permission(root_ptr root,char *path);
 
-void add_ss(char *ss_ip,int ss_port,char *path_arr[],int number_of_paths);
+void add_ss(char *ss_ip,int ss_port);
 
 void print_tree(root_ptr root);
 

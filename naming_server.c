@@ -122,33 +122,105 @@ void print_tree(root_ptr root)
     print_tree(root->next);
 }
 
-void add_ss(char *ss_ip, int ss_port, char *path_arr[], int number_of_paths)
+void add_ss(char *ss_ip, int ss_port)
 {
+
     all_ss_info.number_of_ss++;
-    ss_info *ss_arr=all_ss_info.arr_of_all_ss;
-    ss_arr=(ss_info *)realloc(ss_arr,sizeof(ss_info)*all_ss_info.number_of_ss);
-    ss_info ss_new=ss_arr[all_ss_info.number_of_ss-1];
-    ss_new.ss_ip=ss_ip;
-    ss_new.ss_port=ss_port;
-    struct tree_node root_for_ss_new;
-    root_for_ss_new.name = "/";
-    root_for_ss_new.access_permissiom=0;
-    root_for_ss_new.first_child=NULL;
-    root_for_ss_new.next=NULL;
-    ss_new.root_for_acess=&root_for_ss_new;
-    for (int i = 0; i < number_of_paths; i++)
-    {
-        insert_into_tree(&root_for_ss_new, path_arr[i], 1);
-    }
-    ss_new.root_for_acess=&root_for_ss_new;
-    ss_arr[all_ss_info.number_of_ss-1]=ss_new;
-    print_tree(ss_arr[all_ss_info.number_of_ss-1].root_for_acess);
+
+    all_ss_info.arr_of_all_ss = (ss_info *)realloc(all_ss_info.arr_of_all_ss, sizeof(ss_info) * all_ss_info.number_of_ss);
+
+    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].ss_ip = (char *)malloc(sizeof(char) * strlen(ss_ip));
+    strcpy(all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].ss_ip, ss_ip);
+
+    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].ss_port = ss_port;
+
+    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess = (root_ptr)malloc(sizeof(struct tree_node));
+
+    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->name = "/";
+
+    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->access_permissiom = 0;
+
+    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->first_child = NULL;
+
+    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->next = NULL;
+ 
+    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->dir_or_file = 1;
+   
+}
+
+void initialize_all_ss()
+{
+    all_ss_info.number_of_ss=0;
+    all_ss_info.arr_of_all_ss=NULL;
+}
+
+
+void add_addr_to_ss(char * path,int ss_number)
+{
+    insert_into_tree(all_ss_info.arr_of_all_ss[ss_number].root_for_acess,path,1);
 
 }
 
 int main()
 {
-    
-    
+    initialize_all_ss();
+    int port_number=5572;
+    int sock=socket(AF_INET,SOCK_STREAM,0);
+    if(sock==-1)
+    {
+        perror("Error in socket() function call: ");
+        exit(1);
+    }
+    struct sockaddr_in server_address;
+    memset(&server_address,0,sizeof(server_address));
+    server_address.sin_family=AF_INET;
+
+    server_address.sin_port=port_number;
+    server_address.sin_addr.s_addr=inet_addr("127.0.0.1");
+
+    int bind_success=bind(sock,(struct sockaddr *)&server_address,sizeof(server_address));
+    if(bind_success==-1)
+    {
+        perror("Error in bind() function call: ");
+        exit(1);
+    }
+
+    int listen_success=listen(sock,10);
+
+
+    if(listen_success==-1)
+    {
+        perror("Error in listen() function call: ");
+        exit(1);
+    }
+
+
+    int client_socket;
+    struct sockaddr_in client_address;
+    int client_address_length=sizeof(client_address);
+    client_socket=accept(sock,(struct sockaddr *)&client_address,&client_address_length);
+    if(client_socket==-1)
+    {
+        perror("Error in accept() function call: ");
+        exit(1);
+    }
+    int number_of_accessible_paths;
+    recv(client_socket,&number_of_accessible_paths,sizeof(number_of_accessible_paths),0);
+    printf("%d\n",number_of_accessible_paths);
+
+    add_ss("127.0.0.1",85);
+    // printf("Here\n");
+    // print_tree(all_ss_info.arr_of_all_ss[0].root_for_acess);
+    for(int i=0;i<number_of_accessible_paths;i++)
+    {
+        char path[4096];
+        memset(path,0,sizeof(path));
+        recv(client_socket,path,sizeof(path),0);
+        path[strlen(path)]='\0';
+        printf("%s\n",path);
+        // print_tree(all_ss_info.arr_of_all_ss[0].root_for_acess);
+        add_addr_to_ss(path,all_ss_info.number_of_ss-1);
+    }
+    print_tree(all_ss_info.arr_of_all_ss[0].root_for_acess);
     return 0;
 }
