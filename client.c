@@ -1,0 +1,1 @@
+#include "naming_server.h"
