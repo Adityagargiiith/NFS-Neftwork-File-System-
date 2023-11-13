@@ -153,17 +153,19 @@ void add_ss(char *ss_ip, int ss_port)
 void add_ss_a(struct data_of_ss initial_data_of_ss)
 {
     all_ss_info.number_of_ss++;
-
+    
     all_ss_info.arr_of_all_ss = (ss_info *)realloc(all_ss_info.arr_of_all_ss, sizeof(ss_info) * all_ss_info.number_of_ss);
 
     all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].ss_ip = (char *)malloc(sizeof(char) * strlen("127.0.0.1"));
 
     strcpy(all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].ss_ip, "127.0.0.1");
 
+    
     all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].ss_port = initial_data_of_ss.port_number;
+    
 
     all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess = (root_ptr)malloc(sizeof(struct tree_node));
-
+    
     all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->name = "/";
 
     all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->access_permissiom = 0;
@@ -173,14 +175,16 @@ void add_ss_a(struct data_of_ss initial_data_of_ss)
     all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->next = NULL;
 
     all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->dir_or_file = 1;
-    // printf("Hi Hello\n");
+
     for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
     {
         // printf("%s\n", initial_data_of_ss.paths[i].path);
         initial_data_of_ss.paths[i].path[strlen(initial_data_of_ss.paths[i].path)] = '\0';
         insert_into_tree(all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess, initial_data_of_ss.paths[i].path, initial_data_of_ss.paths[i].permissions);
     }
+    printf("Here12\n");
     print_tree(all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess);
+    printf("Here13\n");
 
 }
 
@@ -194,7 +198,6 @@ void initialize_all_ss()
 void add_addr_to_ss(char * path,int ss_number)
 {
     insert_into_tree(all_ss_info.arr_of_all_ss[ss_number].root_for_acess,path,1);
-
 }
 
 void *ss_init_thread(void *)
@@ -242,7 +245,7 @@ void *ss_init_thread(void *)
         struct data_of_ss initial_data_of_ss;
         memset(&initial_data_of_ss,0,sizeof(initial_data_of_ss));
         recv(client_socket, &initial_data_of_ss, sizeof(initial_data_of_ss), 0);
-        printf("Here1\n");
+        // printf("Here1\n");
         // add_ss("127.0.0.1",initial_data_of_ss.port_number);
         // printf("Here2\n");
         // for(int i=0;i<initial_data_of_ss.number_of_paths;i++)
@@ -257,73 +260,120 @@ void *ss_init_thread(void *)
         }
         
         add_ss_a(initial_data_of_ss);
-        printf("Here3\n");
+        // printf("Here3\n");
     }
 }
 
-
+int search_path_in_trie(root_ptr root, char *path)
+{
+    int ct_of_slash=0;
+    for (int i = 0; i < strlen(path); i++)
+    {
+        if (path[i]=='/')
+        {
+            ct_of_slash++;
+        }
+    }
+    char *path_levels_arr[ct_of_slash];
+    char *copy_of_path=(char *)malloc(sizeof(char)*strlen(path));
+    strcpy(copy_of_path,path);
+    char *token=strtok(copy_of_path,"/");
+    int i=0;
+    while (token!=NULL)
+    {
+        path_levels_arr[i]=token;
+        token=strtok(NULL,"/");
+        i++;
+    }
+    tree_node_ptr temp=root;
+    for (int i = 0; i < (ct_of_slash-1); i++)
+    {
+        if (temp->first_child==NULL)
+        {
+            return 0;
+        }
+        else
+        {
+            temp=temp->first_child;
+            while (temp->next!=NULL)
+            {
+                if (strcmp(temp->name,path_levels_arr[i])==0)
+                {
+                    break;
+                }
+                temp=temp->next;
+            }
+            if (strcmp(temp->name,path_levels_arr[i])==0)
+            {
+                continue;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+    }
+    if (temp->first_child==NULL)
+    {
+        return 0;
+    }
+    else
+    {
+        temp=temp->first_child;
+        while (temp->next!=NULL)
+        {
+            if (strcmp(temp->name,path_levels_arr[ct_of_slash-1])==0)
+            {
+                if (temp->access_permissiom)
+                {
+                    return 1;
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+            temp=temp->next;
+        }
+        if (strcmp(temp->name,path_levels_arr[ct_of_slash-1])==0)
+        {
+            if (temp->access_permissiom)
+            {
+                return 1;
+            }
+            else
+            {
+                return -1;
+            }
+        }
+        else
+        {
+            return 0;
+        }   
+    } 
+}
+ss_info search_for_path_in_all_ss(char *path)
+{
+    ss_info not_found_ss;
+    not_found_ss.root_for_acess=NULL;
+    not_found_ss.ss_ip=NULL;
+    not_found_ss.ss_port=-1;
+    for (int i = 0; i < all_ss_info.number_of_ss; i++)
+    {
+        int search_result=search_path_in_trie(all_ss_info.arr_of_all_ss[i].root_for_acess,path);
+        if (search_result==1)
+        {
+            return all_ss_info.arr_of_all_ss[i];
+        }
+        else if (search_result==-1)
+        {
+            return not_found_ss;
+        }
+    }
+    return not_found_ss;
+}
 int main()
 {
-    // initialize_all_ss();
-    // int port_number=5572;
-    // int sock=socket(AF_INET,SOCK_STREAM,0);
-    // if(sock==-1)
-    // {
-    //     perror("Error in socket() function call: ");
-    //     exit(1);
-    // }
-    // struct sockaddr_in server_address;
-    // memset(&server_address,0,sizeof(server_address));
-    // server_address.sin_family=AF_INET;
-
-    // server_address.sin_port=port_number;
-    // server_address.sin_addr.s_addr=inet_addr("127.0.0.1");
-
-    // int bind_success=bind(sock,(struct sockaddr *)&server_address,sizeof(server_address));
-    // if(bind_success==-1)
-    // {
-    //     perror("Error in bind() function call: ");
-    //     exit(1);
-    // }
-
-    // int listen_success=listen(sock,10);
-
-
-    // if(listen_success==-1)
-    // {
-    //     perror("Error in listen() function call: ");
-    //     exit(1);
-    // }
-
-
-    // int client_socket;
-    // struct sockaddr_in client_address;
-    // int client_address_length=sizeof(client_address);
-    // client_socket=accept(sock,(struct sockaddr *)&client_address,&client_address_length);
-    // if(client_socket==-1)
-    // {
-    //     perror("Error in accept() function call: ");
-    //     exit(1);
-    // }
-    // int number_of_accessible_paths;
-    // recv(client_socket,&number_of_accessible_paths,sizeof(number_of_accessible_paths),0);
-    // printf("%d\n",number_of_accessible_paths);
-
-    // add_ss("127.0.0.1",85);
-    // // printf("Here\n");
-    // // print_tree(all_ss_info.arr_of_all_ss[0].root_for_acess);
-    // for(int i=0;i<number_of_accessible_paths;i++)
-    // {
-    //     char path[4096];
-    //     memset(path,0,sizeof(path));
-    //     recv(client_socket,path,sizeof(path),0);
-    //     path[strlen(path)]='\0';
-    //     printf("%s\n",path);
-    //     // print_tree(all_ss_info.arr_of_all_ss[0].root_for_acess);
-    //     add_addr_to_ss(path,all_ss_info.number_of_ss-1);
-    // }
-    // print_tree(all_ss_info.arr_of_all_ss[0].root_for_acess);
-
     pthread_t ss_init_thread_id;
     pthread_create(&ss_init_thread_id,NULL,ss_init_thread,NULL);
     pthread_join(ss_init_thread_id,NULL);

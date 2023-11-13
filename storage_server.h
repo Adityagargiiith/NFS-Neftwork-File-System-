@@ -16,7 +16,7 @@
 
 struct details_of_path
 {
-    char path[4096];
+    char path[400];
     int permissions;  // read ,write , exxecute
 };
 

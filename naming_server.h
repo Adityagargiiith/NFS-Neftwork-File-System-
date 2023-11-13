@@ -14,6 +14,8 @@
 #include<netinet/in.h>
 #include<pthread.h>
 
+
+
 struct tree_node{
     char *name;
     int number_of_children;
@@ -54,6 +56,10 @@ void print_tree(root_ptr root);
 
 struct all_ss all_ss_info;
 
+int search_path_in_trie(root_ptr root, char *path);
+
+
+ss_info search_for_path_in_all_ss(char *path);
 
 // #define CLIENT_PORT 51234
 
