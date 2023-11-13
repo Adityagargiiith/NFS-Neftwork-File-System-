@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "client.h": "c",
+        "unistd.h": "c",
+        "errorcode.h": "c",
+        "makedir.h": "c",
+        "deletedir.h": "c",
+        "storage_server.h": "c",
+        "read.h": "c",
+        "naming_server.h": "c"
+    }
+}
