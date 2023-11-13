@@ -12,6 +12,7 @@
 #include<unistd.h>
 #include<sys/types.h>
 #include<netinet/in.h>
+#include<pthread.h>
 
 struct tree_node{
     char *name;
@@ -52,5 +53,8 @@ void add_ss(char *ss_ip,int ss_port);
 void print_tree(root_ptr root);
 
 struct all_ss all_ss_info;
+
+
+// #define CLIENT_PORT 51234
 
 #endif

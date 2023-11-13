@@ -12,4 +12,21 @@
 #include <sys/stat.h>
 
 
+#define MAX_PATHS 1000
+
+struct details_of_path
+{
+    char path[4096];
+    int permissions;  // read ,write , exxecute
+};
+
+struct data_of_ss
+{
+    int port_number;
+    int number_of_paths;
+    struct details_of_path paths[MAX_PATHS];
+};
+
+
+
 #endif

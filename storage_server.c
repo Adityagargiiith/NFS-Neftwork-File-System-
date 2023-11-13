@@ -1,4 +1,4 @@
-#include "storage_sesrver.h"
+#include "storage_server.h"
 
 int main()
 {
@@ -29,22 +29,41 @@ int main()
         exit(1);
     }
 
-    int number_of_accessible_paths;
-    printf("Enter number of accessible paths: ");
-    scanf("%d", &number_of_accessible_paths);
+    // int number_of_accessible_paths;
+    // printf("Enter number of accessible paths: ");
+    // scanf("%d", &number_of_accessible_paths);
 
-    send(sock, &number_of_accessible_paths, sizeof(number_of_accessible_paths), 0);
-    for (int i = 0; i < number_of_accessible_paths; i++)
+    // send(sock, &number_of_accessible_paths, sizeof(number_of_accessible_paths), 0);
+    // for (int i = 0; i < number_of_accessible_paths; i++)
+    // {
+    //     char path[4096];
+    //     printf("Enter path %d: ", i + 1);
+    //     scanf("%s", path);
+    //     printf("%s\n", path);
+    //     send(sock, path, strlen(path), 0);
+    // }
+
+    struct data_of_ss initial_data_of_ss;
+    scanf("%d", &initial_data_of_ss.number_of_paths);
+    initial_data_of_ss.port_number=6677;   // hard coded for time being . Will change this later
+    initial_data_of_ss.paths[initial_data_of_ss.number_of_paths];
+    for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
     {
-        char path[4096];
+        initial_data_of_ss.paths[i].permissions=1;  // hard coded for time being . Will change this later
         printf("Enter path %d: ", i + 1);
-        scanf("%s", path);
-        printf("%s\n", path);
-        send(sock, path, strlen(path), 0);
-        // send(sock, path, strlen(path),);
+        scanf("%s", initial_data_of_ss.paths[i].path);
+        initial_data_of_ss.paths[i].path[strlen(initial_data_of_ss.paths[i].path)]='\0';
+        printf("%s\n", initial_data_of_ss.paths[i].path);
     }
-
+    for (int i = initial_data_of_ss.number_of_paths; i < MAX_PATHS; i++)
+    {
+        initial_data_of_ss.paths[i].permissions=0;
+        initial_data_of_ss.paths[i].path[0]='\0';
+    }
     
+    int err_check=send(sock, &initial_data_of_ss, sizeof(initial_data_of_ss), 0);
+    printf("Data sent to naming server\n");
+    // close(sock);
 
     return 0;
 }
