@@ -15,6 +15,8 @@
 #include<pthread.h>
 #include "errorcode.h"
 
+#define CLIENT_PORT 51234
+
 
 
 struct tree_node{

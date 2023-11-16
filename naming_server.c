@@ -329,9 +329,93 @@ void *ss_init_thread(void *)
     }
 }
 
+void *client_req_handler(void *arg)
+{
+    pthread_detach(pthread_self());
+    int client_socket = *((int *)arg);
+    char *msg = (char *)malloc(sizeof(char) * 100);
+    if (recv(client_socket, msg, 100, 0) == -1)
+    {
+        perror("Error in recv() function call: ");
+        exit(1);
+    }
+    char *token = strtok(msg, " ");
+    if (strcmp(token, "makedir") == 0)
+    {
+        char *name_of_dir = strtok(NULL, " ");
+        char *path = strtok(NULL, " ");
+
+        ss_info ans = search_path_in_trie(path);
+
+        int sock_ss = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock_ss == -1)
+        {
+            perror("Error in socket() function call: ");
+            exit(1);
+        }
+        struct sockaddr_in server_address_ss;
+        memset(&server_address_ss, 0, sizeof(server_address_ss));
+        server_address_ss.sin_family = AF_INET;
+        server_address_ss.sin_port = htons(ans.ss_port);
+        server_address_ss.sin_addr.s_addr = inet_addr(ans.ss_ip);
+
+        int connect_success = connect(sock_ss, (struct sockaddr *)&server_address_ss, sizeof(server_address_ss));
+        if (connect_success == -1)
+        {
+            perror("Error in connect() function call: ");
+            exit(1);
+        }
+
+        char *msg_to_ss = (char *)malloc(sizeof(char) * 100);
+        strcpy(msg_to_ss, "makedir ");
+        strcat(msg_to_ss, name_of_dir);
+        strcat(msg_to_ss, " ");
+        strcat(msg_to_ss, path);
+
+        if (send(sock_ss, msg_to_ss, strlen(msg_to_ss), 0) == -1)
+        {
+            perror("Error in send() function call: ");
+            exit(1);
+        }
+
+        int status;
+        if (recv(sock_ss, &status, sizeof(status), 0) == -1)
+        {
+            perror("Error in recv() function call: ");
+            exit(1);
+        }
+
+        close(sock_ss);
+
+        char *new_path = (char *)malloc(sizeof(char) * (strlen(path) + strlen(name_of_dir) + 2));
+        strcpy(new_path, path);
+        strcat(new_path, "/");
+        strcat(new_path, name_of_dir);
+
+        if (status == SUCCESS)
+        {
+            insert_into_tree_new(new_path, 1, ans.ss_ip, ans.ss_port);
+        }
+        else
+        {
+            printf("Error in making directory\n");
+        }
+
+        if (send(client_socket, &status, sizeof(status), 0) == -1)
+        {
+            perror("Error in send() function call: ");
+            exit(1);
+        }
+
+        print_tree(root);
+    }
+
+    close(client_socket);
+    return NULL;
+}
+
 void *client_thread(void *)
 {
-    int port_number = 51234;
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1)
     {
@@ -342,7 +426,7 @@ void *client_thread(void *)
     memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET;
 
-    server_address.sin_port = htons(port_number);
+    server_address.sin_port = htons(CLIENT_PORT);
     server_address.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     int bind_success = bind(sock, (struct sockaddr *)&server_address, sizeof(server_address));
@@ -352,106 +436,26 @@ void *client_thread(void *)
         exit(1);
     }
 
-    int listen_success = listen(sock, 10);
+    int listen_success = listen(sock, 15);
     if (listen_success == -1)
     {
         perror("Error in listen() function call: ");
         exit(1);
     }
 
-    printf("Naming server started\n");
-
-    printf("Client connected\n");
     while (1)
     {
         int client_socket;
         struct sockaddr_in client_address;
         int client_address_length = sizeof(client_address);
-        printf("Waiting for client to connect\n");
         client_socket = accept(sock, (struct sockaddr *)&client_address, &client_address_length);
         if (client_socket == -1)
         {
             perror("Error in accept() function call: ");
             exit(1);
         }
-        char *msg = (char *)malloc(sizeof(char) * 100);
-        if (recv(client_socket, msg, 100, 0) == -1)
-        {
-            perror("Error in recv() function call: ");
-            exit(1);
-        }
-        char *token = strtok(msg, " ");
-        if (strcmp(token, "makedir") == 0)
-        {
-            char *name_of_dir = strtok(NULL, " ");
-            char *path = strtok(NULL, " ");
-
-            ss_info ans = search_path_in_trie(path);
-
-            int sock_ss = socket(AF_INET, SOCK_STREAM, 0);
-            if (sock_ss == -1)
-            {
-                perror("Error in socket() function call: ");
-                exit(1);
-            }
-            struct sockaddr_in server_address_ss;
-            memset(&server_address_ss, 0, sizeof(server_address_ss));
-            server_address_ss.sin_family = AF_INET;
-            server_address_ss.sin_port = htons(ans.ss_port);
-            server_address_ss.sin_addr.s_addr = inet_addr(ans.ss_ip);
-
-            int connect_success = connect(sock_ss, (struct sockaddr *)&server_address_ss, sizeof(server_address_ss));
-            if (connect_success == -1)
-            {
-                perror("Error in connect() function call: ");
-                exit(1);
-            }
-
-            char *msg_to_ss = (char *)malloc(sizeof(char) * 100);
-            strcpy(msg_to_ss, "makedir ");
-            strcat(msg_to_ss, name_of_dir);
-            strcat(msg_to_ss, " ");
-            strcat(msg_to_ss, path);
-
-            if (send(sock_ss, msg_to_ss, strlen(msg_to_ss), 0) == -1)
-            {
-                perror("Error in send() function call: ");
-                exit(1);
-            }
-
-            int status;
-            if (recv(sock_ss, &status, sizeof(status), 0) == -1)
-            {
-                perror("Error in recv() function call: ");
-                exit(1);
-            }
-
-            close(sock_ss);
-
-            char *new_path = (char *)malloc(sizeof(char) * (strlen(path) + strlen(name_of_dir) + 2));
-            strcpy(new_path, path);
-            strcat(new_path, "/");
-            strcat(new_path, name_of_dir);
-
-            if (status == SUCCESS)
-            {
-                insert_into_tree_new(new_path, 1, ans.ss_ip, ans.ss_port);
-            }
-            else
-            {
-                printf("Error in making directory\n");
-            }
-
-            if (send(client_socket, &status, sizeof(status), 0) == -1)
-            {
-                perror("Error in send() function call: ");
-                exit(1);
-            }
-
-            print_tree(root);
-        }
-
-        close(client_socket);
+        pthread_t client_req_handler_thread_id;
+        pthread_create(&client_req_handler_thread_id, NULL, client_req_handler, (void *)&client_socket);
     }
 }
 

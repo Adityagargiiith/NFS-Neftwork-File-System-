@@ -119,37 +119,6 @@ int main()
             printf("path: %s\n", path);
             int status;
 
-            // check if path is accessible
-            // int path_accessible = 0;
-            // for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
-            // {
-            //     if (strcmp(initial_data_of_ss.paths[i].path, path) == 0)
-            //     {
-            //         path_accessible = 1;
-            //         break;
-            //     }
-            // }
-
-            // if (path_accessible == 0)
-            // {
-            //     printf("Path not accessible\n");
-            //     continue;
-            // }
-
-            // check if directory already exists
-            char *path_to_check = (char *)malloc(strlen(path) + strlen(dirname) + 2);
-            strcpy(path_to_check, path);
-            strcat(path_to_check, "/");
-            strcat(path_to_check, dirname);
-
-            if (access(path_to_check, F_OK) == 0)
-            {
-                printf("Directory already exists\n");
-                status = DIR_ALREADY_EXISTS;
-                send(client_socket_nm, &status, sizeof(status), 0);
-                continue;
-            }
-
             char *new_path = (char *)malloc(strlen(path) + strlen(dirname) + 4);
             char *tmp = ".";
             strcpy(new_path, tmp);
@@ -157,6 +126,14 @@ int main()
             strcat(new_path, "/");
             strcat(new_path, dirname);
             printf("new_path: %s\n", new_path);
+
+            if (access(new_path, F_OK) == 0)
+            {
+                status = DIR_ALREADY_EXISTS;
+                send(client_socket_nm, &status, sizeof(status), 0);
+                perror("Error in access() function call: ");
+                continue;
+            }
 
             // create directory
             int err_check = mkdir(new_path, 0777);
