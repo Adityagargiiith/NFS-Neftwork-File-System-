@@ -2,8 +2,9 @@
 #include "storage_server.h"
 
 // 1 for dir and 2 for file
+struct tree_node *root;
 
-tree_node_ptr insert_into_tree(root_ptr root, char *path, int access_permission)
+void insert_into_tree_new(char *path, int access_permission, char *ip, int port)
 {
     int ct_of_slash = 0;
     // printf("%s\n", path);
@@ -16,8 +17,8 @@ tree_node_ptr insert_into_tree(root_ptr root, char *path, int access_permission)
         }
     }
     char *path_arr[ct_of_slash];
-    char *cp_of_path=(char *)malloc(sizeof(char)*strlen(path));
-    strcpy(cp_of_path,path);
+    char *cp_of_path = (char *)malloc(sizeof(char) * strlen(path));
+    strcpy(cp_of_path, path);
     char *token = strtok(cp_of_path, "/");
     int i = 0;
     while (token != NULL)
@@ -27,7 +28,7 @@ tree_node_ptr insert_into_tree(root_ptr root, char *path, int access_permission)
         i++;
     }
     tree_node_ptr temp = root;
-    for (int i = 0; i < (ct_of_slash-1); i++)
+    for (int i = 0; i < (ct_of_slash - 1); i++)
     {
         if (temp->first_child == NULL)
         {
@@ -67,16 +68,18 @@ tree_node_ptr insert_into_tree(root_ptr root, char *path, int access_permission)
                 temp = new_node;
             }
         }
-        
     }
     if (temp->first_child == NULL)
     {
         tree_node_ptr new_node = (tree_node_ptr)malloc(sizeof(struct tree_node));
-        new_node->name = path_arr[ct_of_slash-1];
+        new_node->name = path_arr[ct_of_slash - 1];
         new_node->access_permissiom = access_permission;
         new_node->first_child = NULL;
         new_node->next = NULL;
         new_node->dir_or_file = 2;
+        new_node->ss_port = port;
+        new_node->ss_ip = (char *)malloc(sizeof(char) * (strlen(ip) + 1));
+        strcpy(new_node->ss_ip, ip);
         temp->first_child = new_node;
         temp = new_node;
     }
@@ -85,124 +88,181 @@ tree_node_ptr insert_into_tree(root_ptr root, char *path, int access_permission)
         temp = temp->first_child;
         while (temp->next != NULL)
         {
-            if (strcmp(temp->name, path_arr[ct_of_slash-1]) == 0)
+            if (strcmp(temp->name, path_arr[ct_of_slash - 1]) == 0)
             {
                 break;
             }
             temp = temp->next;
         }
-        if (strcmp(temp->name, path_arr[ct_of_slash-1]) == 0)
+        if (strcmp(temp->name, path_arr[ct_of_slash - 1]) == 0)
         {
             temp->access_permissiom = access_permission;
+            temp->ss_port = port;
+            temp->ss_ip = (char *)malloc(sizeof(char) * (strlen(ip) + 1));
+            strcpy(temp->ss_ip, ip);
         }
         else
         {
             tree_node_ptr new_node = (tree_node_ptr)malloc(sizeof(struct tree_node));
-            new_node->name = path_arr[ct_of_slash-1];
+            new_node->name = path_arr[ct_of_slash - 1];
             new_node->access_permissiom = access_permission;
             new_node->first_child = NULL;
             new_node->next = NULL;
             new_node->dir_or_file = 2;
+            new_node->ss_port = port;
+            new_node->ss_ip = (char *)malloc(sizeof(char) * (strlen(ip) + 1));
+            strcpy(new_node->ss_ip, ip);
             temp->next = new_node;
             temp = new_node;
         }
     }
-    // print_tree(root);      
+}
+void init_root()
+{
+    root = (struct tree_node *)malloc(sizeof(struct tree_node));
+    root->access_permissiom = 0;
+    root->dir_or_file = 1;
+    root->first_child = NULL;
+    root->name = (char *)malloc(sizeof(char) * (strlen("/") + 1));
+    strcpy(root->name, "/");
+    root->name[strlen("/")] = '\0';
+    root->next = NULL;
+    root->ss_ip = NULL;
+    root->ss_port = 0;
 }
 
 
-void print_tree(root_ptr root)
+ss_info search_path_in_trie(char *path)
 {
-    if (root == NULL)
+    ss_info ret_answer;
+    ret_answer.ss_ip=NULL;
+    ret_answer.ss_port=-1;
+    int ct_of_slash = 0;
+    for (int i = 0; i < strlen(path); i++)
     {
-        // printf("NULL\n");
+        if (path[i] == '/')
+        {
+            ct_of_slash++;
+        }
+    }
+    char *path_levels_arr[ct_of_slash];
+    char *copy_of_path = (char *)malloc(sizeof(char) * strlen(path));
+    strcpy(copy_of_path, path);
+    char *token = strtok(copy_of_path, "/");
+    int i = 0;
+    while (token != NULL)
+    {
+        path_levels_arr[i] = token;
+        token = strtok(NULL, "/");
+        i++;
+    }
+    tree_node_ptr temp = root;
+    for (int i = 0; i < (ct_of_slash - 1); i++)
+    {
+        if (temp->first_child == NULL)
+        {
+            // return 0;
+            // here we have to return the error code of path not found
+            return ret_answer;
+        }
+        else
+        {
+            temp = temp->first_child;
+            while (temp->next != NULL)
+            {
+                if (strcmp(temp->name, path_levels_arr[i]) == 0)
+                {
+                    break;
+                }
+                temp = temp->next;
+            }
+            if (strcmp(temp->name, path_levels_arr[i]) == 0)
+            {
+                continue;
+            }
+            else
+            {
+                // return 0;
+                // here we have to return the error code of path not found
+                return ret_answer;
+            }
+        }
+    }
+    if (temp->first_child == NULL)
+    {
+        // return 0;
+        // here we have to return the error code of path not found
+        return ret_answer;
+    }
+    else
+    {
+        temp = temp->first_child;
+        while (temp->next != NULL)
+        {
+            if (strcmp(temp->name, path_levels_arr[ct_of_slash - 1]) == 0)
+            {
+                if (temp->access_permissiom)
+                {
+                    // return 1;
+                    ret_answer.ss_ip=(char *)malloc(sizeof(char)*(strlen(temp->ss_ip)+1));
+                    strcpy(ret_answer.ss_ip,temp->ss_ip);
+                    ret_answer.ss_port=temp->ss_port;
+                    return ret_answer;
+                }
+                else
+                {
+                    // return -1;
+                    // here we have to return the error code of missing permission
+                    return ret_answer;
+                }
+            }
+            temp = temp->next;
+        }
+        if (strcmp(temp->name, path_levels_arr[ct_of_slash - 1]) == 0)
+        {
+            if (temp->access_permissiom)
+            {
+                // return 1;
+                ret_answer.ss_ip=(char *)malloc(sizeof(char)*(strlen(temp->ss_ip)+1));
+                strcpy(ret_answer.ss_ip,temp->ss_ip);
+                ret_answer.ss_port=temp->ss_port;
+                return ret_answer;
+            }
+            else
+            {
+                // return -1;
+                // here we have to return the error code of missing permission
+                return ret_answer;
+            }
+        }
+        else
+        {
+            // return 0;
+            // here we have to return the error code of path not found
+            return ret_answer;
+        }
+    }
+}
+void print_tree(struct tree_node *curr)
+{
+    // printf("Yaha\n");
+    if (curr == NULL)
+    {
         return;
     }
-    printf("%s\n", root->name);
-    print_tree(root->first_child);
-    print_tree(root->next);
-}
-
-void add_ss(char *ss_ip, int ss_port)
-{
-
-    all_ss_info.number_of_ss++;
-
-    all_ss_info.arr_of_all_ss = (ss_info *)realloc(all_ss_info.arr_of_all_ss, sizeof(ss_info) * all_ss_info.number_of_ss);
-
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].ss_ip = (char *)malloc(sizeof(char) * strlen(ss_ip));
-    strcpy(all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].ss_ip, ss_ip);
-
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].ss_port = ss_port;
-
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess = (root_ptr)malloc(sizeof(struct tree_node));
-
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->name = "/";
-
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->access_permissiom = 0;
-
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->first_child = NULL;
-
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->next = NULL;
- 
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->dir_or_file = 1;
-   
-}
-
-
-void add_ss_a(struct data_of_ss initial_data_of_ss)
-{
-    all_ss_info.number_of_ss++;
-    
-    all_ss_info.arr_of_all_ss = (ss_info *)realloc(all_ss_info.arr_of_all_ss, sizeof(ss_info) * all_ss_info.number_of_ss);
-
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].ss_ip = (char *)malloc(sizeof(char) * strlen("127.0.0.1"));
-
-    strcpy(all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].ss_ip, "127.0.0.1");
-
-    
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].ss_port = initial_data_of_ss.port_number;
-    
-
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess = (root_ptr)malloc(sizeof(struct tree_node));
-    
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->name = "/";
-
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->access_permissiom = 0;
-
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->first_child = NULL;
-
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->next = NULL;
-
-    all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess->dir_or_file = 1;
-
-    for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
+    else
     {
-        // printf("%s\n", initial_data_of_ss.paths[i].path);
-        initial_data_of_ss.paths[i].path[strlen(initial_data_of_ss.paths[i].path)] = '\0';
-        insert_into_tree(all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess, initial_data_of_ss.paths[i].path, initial_data_of_ss.paths[i].permissions);
+        printf("%s ", curr->name);
+        printf("Port %d ip %s\n",curr->ss_port,curr->ss_ip);
+        print_tree(curr->first_child);
+        print_tree(curr->next);
     }
-    printf("Here12\n");
-    print_tree(all_ss_info.arr_of_all_ss[all_ss_info.number_of_ss - 1].root_for_acess);
-    printf("Here13\n");
-
-}
-
-void initialize_all_ss()
-{
-    all_ss_info.number_of_ss=0;
-    all_ss_info.arr_of_all_ss=NULL;
-}
-
-
-void add_addr_to_ss(char * path,int ss_number)
-{
-    insert_into_tree(all_ss_info.arr_of_all_ss[ss_number].root_for_acess,path,1);
 }
 
 void *ss_init_thread(void *)
 {
-    initialize_all_ss();
+    // initialize_all_ss();
+    init_root();
     int port_number = 5572;
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1)
@@ -243,139 +303,36 @@ void *ss_init_thread(void *)
             exit(1);
         }
         struct data_of_ss initial_data_of_ss;
-        memset(&initial_data_of_ss,0,sizeof(initial_data_of_ss));
+        memset(&initial_data_of_ss, 0, sizeof(initial_data_of_ss));
         recv(client_socket, &initial_data_of_ss, sizeof(initial_data_of_ss), 0);
         // printf("Here1\n");
-        // add_ss("127.0.0.1",initial_data_of_ss.port_number);
-        // printf("Here2\n");
-        // for(int i=0;i<initial_data_of_ss.number_of_paths;i++)
-        // {
-        //     add_addr_to_ss(initial_data_of_ss.paths[i].path,all_ss_info.number_of_ss-1);
-        // }
-        // printf("%d\n", initial_data_of_ss.number_of_paths);
         for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
         {
-            
-            printf("%s\n", initial_data_of_ss.paths[i].path);
+            insert_into_tree_new(initial_data_of_ss.paths[i].path, initial_data_of_ss.paths[i].permissions, "127.0.0.1", initial_data_of_ss.port_number);
         }
-        
-        add_ss_a(initial_data_of_ss);
-        // printf("Here3\n");
+        // printf("Here2\n");
+        // print_tree(root);
+        // ss_info ans=search_path_in_trie("/a/b");
+        // if (ans.ss_port==-1)
+        // {
+        //     /* code */
+        //     printf("Not found\n");
+        // }
+        // else
+        // {
+        //     /* code */
+        //     printf("Found\n");
+        //     printf("%d %s\n",ans.ss_port,ans.ss_ip);
+
+        // }
+       
     }
 }
 
-int search_path_in_trie(root_ptr root, char *path)
-{
-    int ct_of_slash=0;
-    for (int i = 0; i < strlen(path); i++)
-    {
-        if (path[i]=='/')
-        {
-            ct_of_slash++;
-        }
-    }
-    char *path_levels_arr[ct_of_slash];
-    char *copy_of_path=(char *)malloc(sizeof(char)*strlen(path));
-    strcpy(copy_of_path,path);
-    char *token=strtok(copy_of_path,"/");
-    int i=0;
-    while (token!=NULL)
-    {
-        path_levels_arr[i]=token;
-        token=strtok(NULL,"/");
-        i++;
-    }
-    tree_node_ptr temp=root;
-    for (int i = 0; i < (ct_of_slash-1); i++)
-    {
-        if (temp->first_child==NULL)
-        {
-            return 0;
-        }
-        else
-        {
-            temp=temp->first_child;
-            while (temp->next!=NULL)
-            {
-                if (strcmp(temp->name,path_levels_arr[i])==0)
-                {
-                    break;
-                }
-                temp=temp->next;
-            }
-            if (strcmp(temp->name,path_levels_arr[i])==0)
-            {
-                continue;
-            }
-            else
-            {
-                return 0;
-            }
-        }
-    }
-    if (temp->first_child==NULL)
-    {
-        return 0;
-    }
-    else
-    {
-        temp=temp->first_child;
-        while (temp->next!=NULL)
-        {
-            if (strcmp(temp->name,path_levels_arr[ct_of_slash-1])==0)
-            {
-                if (temp->access_permissiom)
-                {
-                    return 1;
-                }
-                else
-                {
-                    return -1;
-                }
-            }
-            temp=temp->next;
-        }
-        if (strcmp(temp->name,path_levels_arr[ct_of_slash-1])==0)
-        {
-            if (temp->access_permissiom)
-            {
-                return 1;
-            }
-            else
-            {
-                return -1;
-            }
-        }
-        else
-        {
-            return 0;
-        }   
-    } 
-}
-ss_info search_for_path_in_all_ss(char *path)
-{
-    ss_info not_found_ss;
-    not_found_ss.root_for_acess=NULL;
-    not_found_ss.ss_ip=NULL;
-    not_found_ss.ss_port=-1;
-    for (int i = 0; i < all_ss_info.number_of_ss; i++)
-    {
-        int search_result=search_path_in_trie(all_ss_info.arr_of_all_ss[i].root_for_acess,path);
-        if (search_result==1)
-        {
-            return all_ss_info.arr_of_all_ss[i];
-        }
-        else if (search_result==-1)
-        {
-            return not_found_ss;
-        }
-    }
-    return not_found_ss;
-}
 int main()
 {
     pthread_t ss_init_thread_id;
-    pthread_create(&ss_init_thread_id,NULL,ss_init_thread,NULL);
-    pthread_join(ss_init_thread_id,NULL);
+    pthread_create(&ss_init_thread_id, NULL, ss_init_thread, NULL);
+    pthread_join(ss_init_thread_id, NULL);
     return 0;
 }

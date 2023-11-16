@@ -23,6 +23,8 @@ struct tree_node{
     struct tree_node *next;
     int dir_or_file;
     int access_permissiom;
+    char *ss_ip;
+    int ss_port;
 };
 
 typedef struct tree_node tree_node;
@@ -32,17 +34,11 @@ typedef struct tree_node *root_ptr;
 struct ss_info{
     char *ss_ip;
     int ss_port;
-    root_ptr root_for_acess;
 };
-
 
 
 typedef struct ss_info ss_info;
 
-struct all_ss{
-    int number_of_ss;
-    ss_info *arr_of_all_ss;
-};
 
 tree_node_ptr insert_into_tree(root_ptr root,char *path,int access_permission);
 
@@ -50,17 +46,14 @@ void delete_from_tree(root_ptr root,char *path);
 
 void remove_permission(root_ptr root,char *path);
 
-void add_ss(char *ss_ip,int ss_port);
+void print_tree(struct tree_node* curr);
 
-void print_tree(root_ptr root);
-
-struct all_ss all_ss_info;
-
-int search_path_in_trie(root_ptr root, char *path);
+ss_info search_path_in_trie(char *path);
 
 
-ss_info search_for_path_in_all_ss(char *path);
 
-// #define CLIENT_PORT 51234
+void insert_into_tree_new(char *path, int access_permission, char *ip, int port);
+extern struct tree_node *root;
+void init_root();
 
 #endif
