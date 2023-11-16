@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 #include "../errorcode.h"
 #include "../client.h"
 #include "../naming_server.h"

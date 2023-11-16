@@ -10,6 +10,6 @@
 #include "../naming_server.h"
 #include "../storage_server.h"
 
-void read(char *input);
+void read_file(char *input);
 
 #endif

@@ -1,6 +1,6 @@
 #include "read.h"
 
-void read(char *input)
+void read_file(char *input)
 {
     char *cpy_command = (char *)malloc(sizeof(char) * strlen(input));
     strcpy(cpy_command, input);
@@ -108,6 +108,8 @@ void read(char *input)
             printf("Error in sending data to storage server\n");
             return;
         }
+
+        
 
     }
     else if (status == FILE_NOT_FOUND)

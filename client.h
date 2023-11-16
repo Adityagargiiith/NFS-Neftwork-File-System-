@@ -11,10 +11,10 @@
 #include "command/list.h"
 #include "command/read.h"
 #include "command/write.h"
+#include "command/info.h"
 #include <wait.h>
 
 #define NM_PORT 51234
-char *ip = "127.0.0.1";
-
+#define ip "127.0.0.1"
 
 #endif

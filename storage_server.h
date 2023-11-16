@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/stat.h>
+#include "errorcode.h"
 
 
 #define MAX_PATHS 1000
