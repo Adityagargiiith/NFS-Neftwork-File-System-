@@ -18,7 +18,7 @@ int main()
     struct sockaddr_in server_address;
     memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET;
-    server_address.sin_port = server_port_number;
+    server_address.sin_port = htons(server_port_number);
     server_address.sin_addr.s_addr = inet_addr(ip_address);
 
     int connect_success = connect(sock, (struct sockaddr *)&server_address, sizeof(server_address));
@@ -28,20 +28,6 @@ int main()
         perror("Error in connect() function call: ");
         exit(1);
     }
-
-    // int number_of_accessible_paths;
-    // printf("Enter number of accessible paths: ");
-    // scanf("%d", &number_of_accessible_paths);
-
-    // send(sock, &number_of_accessible_paths, sizeof(number_of_accessible_paths), 0);
-    // for (int i = 0; i < number_of_accessible_paths; i++)
-    // {
-    //     char path[4096];
-    //     printf("Enter path %d: ", i + 1);
-    //     scanf("%s", path);
-    //     printf("%s\n", path);
-    //     send(sock, path, strlen(path), 0);
-    // }
 
     struct data_of_ss initial_data_of_ss;
     scanf("%d", &initial_data_of_ss.number_of_paths);
@@ -115,41 +101,15 @@ int main()
         {
             char *dirname = strtok(NULL, " ");
             char *path = strtok(NULL, " ");
-            printf("dirname: %s\n", dirname);
-            printf("path: %s\n", path);
-            int status;
-
-            char *new_path = (char *)malloc(strlen(path) + strlen(dirname) + 4);
-            char *tmp = ".";
-            strcpy(new_path, tmp);
-            strcat(new_path, path);
-            strcat(new_path, "/");
-            strcat(new_path, dirname);
-            printf("new_path: %s\n", new_path);
-
-            if (access(new_path, F_OK) == 0)
-            {
-                status = DIR_ALREADY_EXISTS;
-                send(client_socket_nm, &status, sizeof(status), 0);
-                perror("Error in access() function call: ");
-                continue;
-            }
-
-            // create directory
-            int err_check = mkdir(new_path, 0777);
-            if (err_check == -1)
-            {
-                status = CREATE_ERROR;
-                send(client_socket_nm, &status, sizeof(status), 0);
-                perror("Error in mkdir() function call: ");
-                continue;
-            }
-            printf("Directory created\n");
-
-            status = SUCCESS;
-            send(client_socket_nm, &status, sizeof(status), 0);
+            makedirss(dirname, path, client_socket_nm);
         }
-        // send success message to naming server
+        else if (strcmp(token, "deletedir") ==0)
+        {
+            char *path = strtok(NULL, " ");
+            deletedirss(path, client_socket_nm);
+        }
+
+        close(client_socket_nm);
     }
 
     // close(sock);

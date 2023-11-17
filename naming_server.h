@@ -14,6 +14,7 @@
 #include<netinet/in.h>
 #include<pthread.h>
 #include "errorcode.h"
+#include "nmutils/makedir.h"
 
 #define CLIENT_PORT 51234
 
@@ -58,5 +59,7 @@ ss_info search_path_in_trie(char *path);
 void insert_into_tree_new(char *path, int access_permission, char *ip, int port);
 extern struct tree_node *root;
 void init_root();
+
+#define IP "127.0.0.1"
 
 #endif

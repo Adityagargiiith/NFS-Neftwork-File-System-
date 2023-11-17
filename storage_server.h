@@ -11,6 +11,8 @@
 #include <netinet/in.h>
 #include <sys/stat.h>
 #include "errorcode.h"
+#include "ssutils/makedir.h"
+#include "ssutils/deletedir.h"
 
 
 #define MAX_PATHS 1000
@@ -27,7 +29,6 @@ struct data_of_ss
     int number_of_paths;
     struct details_of_path paths[MAX_PATHS];
 };
-
 
 
 #endif
