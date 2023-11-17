@@ -43,10 +43,12 @@ void deletedirnm(char* path, int client_socket_nm)
     }
 
     close(sock_ss);
-
+    printf("HERE12345\n");
     if (status == SUCCESS)
     {
+        printf("Yaha\n");
         delete_from_trie(path);
+        printf("Here11\n");
     }
     else
     {

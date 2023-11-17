@@ -124,31 +124,20 @@ void delete_subtree(struct tree_node *curr)
         delete_subtree(curr->first_child);
         delete_subtree(curr->next);
         // free(curr);
-        if (curr->ss_ip)
-        {
-            free(curr->ss_ip);
-        }
-        if (curr->name)
-        {
-            free(curr->name);
-        }
-        free(curr);
+        // if (curr->ss_ip)
+        // {
+        //     free(curr->ss_ip);
+        // }
+        // if (curr->name)
+        // {
+        //     free(curr->name);
+        // }
+        // free(curr);
     }
     
 }
 int delete_from_trie(char *path)
 {
-    if (path == NULL)
-    {
-        printf("Path is NULL\n");
-        return -1;
-    }
-    ss_info check_for_existence= search_path_in_trie(path);
-    if(check_for_existence.ss_port==-1)
-    {
-        printf("Path does not exist\n");
-        return -1;
-    }
     int ct_of_slash = 0;
     for (int i = 0; i < strlen(path); i++)
     {
@@ -231,15 +220,15 @@ int delete_from_trie(char *path)
     }
     delete_subtree(temp->first_child);
     temp->first_child=NULL;
-    if (temp->ss_ip)
-    {
-        free(temp->ss_ip);
-    }
-    if (temp->name)
-    {
-        free(temp->name);
-    }
-    free(temp);
+    // if (temp->ss_ip)
+    // {
+    //     // free(temp->ss_ip);
+    // }
+    // if (temp->name)
+    // {
+    //     // free(temp->name);
+    // }
+    // free(temp);
     return 0;
 }
 void init_root()
