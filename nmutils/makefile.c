@@ -4,6 +4,17 @@ void makefilenm(char *filename, char* path , int client_soket)
 {
     ss_info ans =search_path_in_trie(path);
 
+    if(ans.ss_port==-1)
+    {
+        int status = INVALID_PATH;
+        if (send(client_soket, &status, sizeof(status), 0) == -1)
+        {
+            perror("Error in send() function call: ");
+            return;
+        }
+        return;
+    }
+
     int sock_ss = socket(AF_INET, SOCK_STREAM, 0);
     if(sock_ss == -1)
     {
@@ -52,7 +63,7 @@ void makefilenm(char *filename, char* path , int client_soket)
 
     if(status == SUCCESS)
     {
-        insert_into_tree_new(new_path, 0, ans.ss_ip, ans.ss_port);
+        insert_into_tree_new(new_path, 1, ans.ss_ip, ans.ss_port);
     }
     else
     {
@@ -64,6 +75,7 @@ void makefilenm(char *filename, char* path , int client_soket)
         perror("Error in send() function call: ");
         return;
     }
+    
 
     return;
 }

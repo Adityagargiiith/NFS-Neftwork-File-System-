@@ -4,6 +4,17 @@ void makedirnm(char *name_of_dir, char *path, int client_socket)
 {
     ss_info ans = search_path_in_trie(path);
 
+    if (ans.ss_port == -1)
+    {
+        int status = INVALID_PATH;
+        if (send(client_socket, &status, sizeof(status), 0) == -1)
+        {
+            perror("Error in send() function call: ");
+            return;
+        }
+        return;
+    }
+
     int sock_ss = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_ss == -1)
     {

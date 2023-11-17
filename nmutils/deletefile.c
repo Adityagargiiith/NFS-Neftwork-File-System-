@@ -4,6 +4,17 @@ void deletefilenm(char *path, int client_socket_nm)
 {
     ss_info ans = search_path_in_trie(path);
 
+    if(ans.ss_port==-1)
+    {
+        int status = FILE_NOT_FOUND;
+        if (send(client_socket_nm, &status, sizeof(status), 0) == -1)
+        {
+            perror("Error in send() function call: ");
+            return;
+        }
+        return;
+    }
+
     int sock_ss = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_ss == -1)
     {

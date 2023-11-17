@@ -32,7 +32,7 @@ int main()
     printf("File name recieved is %s\n", file_name);
     // int file_fd = open(file_name, O_RDONLY);
     // create
-    int file_fd = open(file_name,O_RDONLY | O_WRONLY | O_CREAT, 0666); 
+    int file_fd = open(file_name, O_RDONLY | O_WRONLY | O_CREAT, 0666);
     int number_of_bytes_to_recieve;
     read(server_fd, &number_of_bytes_to_recieve, sizeof(number_of_bytes_to_recieve));
     printf("Number of bytes to recieve is %d\n", number_of_bytes_to_recieve);
@@ -40,7 +40,7 @@ int main()
     int number_of_bytes_recieved = 0;
     while (1)
     {
-        if (number_of_bytes_recieved == number_of_bytes_to_recieve)
+        if (number_of_bytes_recieved >= number_of_bytes_to_recieve)
         {
             break;
         }
@@ -50,12 +50,11 @@ int main()
             /* code */
             break;
         }
-        
+
         write(file_fd, buffer, number_of_bytes_recieved_now);
         number_of_bytes_recieved += number_of_bytes_recieved_now;
-
     }
-    
+
     printf("File recieved\n");
     return 0;
 }
