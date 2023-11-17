@@ -18,6 +18,7 @@
 #include "ssutils/deletedir.h"
 #include "ssutils/makefile.h"
 #include "ssutils/deletefile.h"
+#include "nmutils/trie.h"
 
 #define MAX_PATHS 1000
 #define NM_INIT_PORT 5572

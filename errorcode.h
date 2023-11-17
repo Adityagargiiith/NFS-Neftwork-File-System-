@@ -13,8 +13,7 @@
 #define DELETE_ERROR 110 // Error in deleting file/directory
 #define SRC_NOT_FOUND 111 // Source file/directory not found
 #define DEST_NOT_FOUND 112 // Destination file/directory not found
-
-
+#define COPY_ERROR 113 // Error in copying file/directory
 
 
 #endif

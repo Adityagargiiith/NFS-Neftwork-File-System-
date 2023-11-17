@@ -49,16 +49,20 @@ void *ss_init_thread(void *)
         printf("Storage server connected\n");
         struct data_of_ss initial_data_of_ss;
         memset(&initial_data_of_ss, 0, sizeof(initial_data_of_ss));
-        recv(client_socket, &initial_data_of_ss, sizeof(initial_data_of_ss), 0);
+        // recv(client_socket, &initial_data_of_ss, sizeof(initial_data_of_ss), 0);
         // printf("Here1\n");
-        //get ip address of storage server from struct sockaddr_in client_address
+        if (recv(client_socket, &initial_data_of_ss, sizeof(initial_data_of_ss), 0) == -1)
+        {
+            perror("Error in recv() function call: ");
+            exit(1);
+        }
+        // get ip address of storage server from struct sockaddr_in client_address
         char *ip_address_of_ss = inet_ntoa(client_address.sin_addr);
 
         for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
         {
-            insert_into_tree_new(initial_data_of_ss.paths[i].path, initial_data_of_ss.paths[i].permissions, ip_address_of_ss, initial_data_of_ss.port_number,initial_data_of_ss.client_port,initial_data_of_ss.s2s_port);
+            insert_into_tree_new(initial_data_of_ss.paths[i].path, initial_data_of_ss.paths[i].permissions, ip_address_of_ss, initial_data_of_ss.port_number, initial_data_of_ss.client_port, initial_data_of_ss.s2s_port);
         }
-
     }
 }
 
@@ -79,21 +83,27 @@ void *client_req_handler(void *arg)
         char *path = strtok(NULL, " ");
         makedirnm(name_of_dir, path, client_socket);
     }
-    else if(strcmp(token, "deletedir") ==0)
+    else if (strcmp(token, "deletedir") == 0)
     {
-        char *path= strtok(NULL, " ");
-        deletedirnm(path,client_socket);
+        char *path = strtok(NULL, " ");
+        deletedirnm(path, client_socket);
     }
-    else if(strcmp(token,"makefile")==0)
+    else if (strcmp(token, "makefile") == 0)
     {
-        char *filename=strtok(NULL," ");
-        char *path=strtok(NULL," ");
-        makefilenm(filename,path,client_socket);
+        char *filename = strtok(NULL, " ");
+        char *path = strtok(NULL, " ");
+        makefilenm(filename, path, client_socket);
     }
-    else if(strcmp(token,"deletefile")==0)
+    else if (strcmp(token, "deletefile") == 0)
     {
-        char *path=strtok(NULL," ");
-        deletefilenm(path,client_socket);
+        char *path = strtok(NULL, " ");
+        deletefilenm(path, client_socket);
+    }
+    else if (strcmp(token, "copyfile") == 0)
+    {
+        char *src = strtok(NULL, " ");
+        char *dest = strtok(NULL, " ");
+        copyfilenm(src, dest, client_socket);
     }
 
     close(client_socket);

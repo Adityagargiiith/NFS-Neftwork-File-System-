@@ -31,7 +31,7 @@ int get_random_port_number()
 }
 
 int nm_conn_port;
-
+int s2s_conn_port;
 void *naming_server_init(void *)
 {
     int sock;
@@ -188,6 +188,35 @@ void *naming_server_communication(void *)
         {
             char *path = strtok(NULL, " ");
             deletefiless(path, client_socket_nm);
+        }
+        else if(strcmp(token, "copyfile")==0)
+        {
+            char *temp= strtok(NULL, " ");
+            if(strcmp(temp,"dest")==0)
+            {
+                char *dest = strtok(NULL, " ");
+                ss_info *ss_to_receive = (ss_info *)malloc(sizeof(ss_info));
+                int bytes_received = recv(client_socket_nm, ss_to_receive, sizeof(ss_info), 0);
+                if (bytes_received == -1)
+                {
+                    perror("Error in recv() function call: ");
+                    exit(1);
+                }
+                copyfilereceive(dest,ss_to_receive,client_socket_nm);
+            }
+            else if(strcmp(temp,"src")==0)
+            {
+                char *src = strtok(NULL, " ");
+                ss_info *ss_to_send = (ss_info *)malloc(sizeof(ss_info));
+                int bytes_received = recv(client_socket_nm, ss_to_send, sizeof(ss_info), 0);
+                if (bytes_received == -1)
+                {
+                    perror("Error in recv() function call: ");
+                    exit(1);
+                }
+                copyfiless(src,ss_to_send,client_socket_nm);
+                
+            }
         }
 
         close(client_socket_nm);
