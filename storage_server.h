@@ -34,6 +34,8 @@ struct data_of_ss
 {
     int port_number;
     int number_of_paths;
+    int s2s_port;
+    int client_port;
     struct details_of_path paths[MAX_PATHS];
 };
 

@@ -13,6 +13,8 @@ struct tree_node
     int access_permissiom;
     char *ss_ip;
     int ss_port;
+    int client_port;
+    int s2s_port;
 };
 
 typedef struct tree_node tree_node;
@@ -23,11 +25,13 @@ struct ss_info
 {
     char *ss_ip;
     int ss_port;
+    int client_port;
+    int s2s_port;
 };
 
 typedef struct ss_info ss_info;
 
-void insert_into_tree_new(char *path, int access_permission, char *ip, int port);
+void insert_into_tree_new(char *path, int access_permission, char *ip, int port,int client_port1,int s2s_port1);
 void init_root();
 ss_info search_path_in_trie(char *path);
 void print_tree(struct tree_node *curr);

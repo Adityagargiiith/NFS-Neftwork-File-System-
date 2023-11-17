@@ -1,6 +1,6 @@
 #include "trie.h"
 
-void insert_into_tree_new(char *path, int access_permission, char *ip, int port)
+void insert_into_tree_new(char *path, int access_permission, char *ip, int port,int client_port1,int s2s_port1)
 {
     int ct_of_slash = 0;
     // printf("%s\n", path);
@@ -74,6 +74,8 @@ void insert_into_tree_new(char *path, int access_permission, char *ip, int port)
         new_node->next = NULL;
         new_node->dir_or_file = 2;
         new_node->ss_port = port;
+        new_node->client_port = client_port1;
+        new_node->s2s_port = s2s_port1;
         new_node->ss_ip = (char *)malloc(sizeof(char) * (strlen(ip) + 1));
         strcpy(new_node->ss_ip, ip);
         temp->first_child = new_node;
@@ -106,6 +108,8 @@ void insert_into_tree_new(char *path, int access_permission, char *ip, int port)
             new_node->next = NULL;
             new_node->dir_or_file = 2;
             new_node->ss_port = port;
+            new_node->client_port = client_port1;
+            new_node->s2s_port = s2s_port1;
             new_node->ss_ip = (char *)malloc(sizeof(char) * (strlen(ip) + 1));
             strcpy(new_node->ss_ip, ip);
             temp->next = new_node;
@@ -320,6 +324,8 @@ ss_info search_path_in_trie(char *path)
                     ret_answer.ss_ip = (char *)malloc(sizeof(char) * (strlen(temp->ss_ip) + 1));
                     strcpy(ret_answer.ss_ip, temp->ss_ip);
                     ret_answer.ss_port = temp->ss_port;
+                    ret_answer.s2s_port = temp->s2s_port;
+                    ret_answer.client_port = temp->client_port;
                     return ret_answer;
                 }
                 else
@@ -339,6 +345,8 @@ ss_info search_path_in_trie(char *path)
                 ret_answer.ss_ip = (char *)malloc(sizeof(char) * (strlen(temp->ss_ip) + 1));
                 strcpy(ret_answer.ss_ip, temp->ss_ip);
                 ret_answer.ss_port = temp->ss_port;
+                ret_answer.s2s_port = temp->s2s_port;
+                ret_answer.client_port = temp->client_port;
                 return ret_answer;
             }
             else
