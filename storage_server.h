@@ -19,6 +19,8 @@
 #include "ssutils/deletefile.h"
 
 #define MAX_PATHS 1000
+#define NM_CONN_PORT 5572
+#define NM_CONN_IP "127.0.0.1"
 
 struct details_of_path
 {

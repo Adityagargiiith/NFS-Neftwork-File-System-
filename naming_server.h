@@ -21,6 +21,7 @@
 #include "nmutils/trie.h"
 
 #define CLIENT_PORT 51234
+#define SS_PORT 5572
 
 
 

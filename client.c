@@ -62,6 +62,14 @@ int main()
             {
                 info(input);
             }
+            else if( strcmp(command, "copydir") ==0)
+            {
+                copydir(input);
+            }
+            else if(strcmp(command,"copyfile")==0)
+            {
+                copyfile(input);
+            }
             else if (strcmp(command, "exit") == 0)
             {
                 exit(0);

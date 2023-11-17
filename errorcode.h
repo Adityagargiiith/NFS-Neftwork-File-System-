@@ -11,6 +11,9 @@
 #define FILE_NOT_FOUND 108 // File not found
 #define DIR_NOT_FOUND 109 // Directory not found
 #define DELETE_ERROR 110 // Error in deleting file/directory
+#define SRC_NOT_FOUND 111 // Source file/directory not found
+#define DEST_NOT_FOUND 112 // Destination file/directory not found
+
 
 
 

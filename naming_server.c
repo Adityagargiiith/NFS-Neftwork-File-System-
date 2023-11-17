@@ -8,7 +8,7 @@ void *ss_init_thread(void *)
 {
     // initialize_all_ss();
     init_root();
-    int port_number = 5572;
+    int port_number = SS_PORT;
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1)
     {
@@ -18,7 +18,6 @@ void *ss_init_thread(void *)
     struct sockaddr_in server_address;
     memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET;
-
     server_address.sin_port = htons(port_number);
     server_address.sin_addr.s_addr = inet_addr(IP);
 
@@ -52,9 +51,12 @@ void *ss_init_thread(void *)
         memset(&initial_data_of_ss, 0, sizeof(initial_data_of_ss));
         recv(client_socket, &initial_data_of_ss, sizeof(initial_data_of_ss), 0);
         // printf("Here1\n");
+        //get ip address of storage server from struct sockaddr_in client_address
+        char *ip_address_of_ss = inet_ntoa(client_address.sin_addr);
+
         for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
         {
-            insert_into_tree_new(initial_data_of_ss.paths[i].path, initial_data_of_ss.paths[i].permissions, "127.0.0.1", initial_data_of_ss.port_number);
+            insert_into_tree_new(initial_data_of_ss.paths[i].path, initial_data_of_ss.paths[i].permissions, ip_address_of_ss, initial_data_of_ss.port_number);
         }
 
     }

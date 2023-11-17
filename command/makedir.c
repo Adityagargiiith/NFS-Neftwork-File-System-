@@ -43,8 +43,6 @@ void makedir(char *input)
     int ret = connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
     if (ret < 0)
     {
-        //print errorno
-        printf("%d\n", errno);
         printf("Error in connecting to naming server\n");
         return;
     }
