@@ -18,50 +18,29 @@
 #include "nmutils/deletedir.h"
 #include "nmutils/makefile.h"
 #include "nmutils/deletefile.h"
+#include "nmutils/trie.h"
 
 #define CLIENT_PORT 51234
 
 
 
-struct tree_node{
-    char *name;
-    int number_of_children;
-    struct tree_node *first_child;
-    struct tree_node *next;
-    int dir_or_file;
-    int access_permissiom;
-    char *ss_ip;
-    int ss_port;
-};
-
-typedef struct tree_node tree_node;
-typedef struct tree_node *tree_node_ptr;
-typedef struct tree_node *root_ptr;
-
-struct ss_info{
-    char *ss_ip;
-    int ss_port;
-};
 
 
-typedef struct ss_info ss_info;
+// tree_node_ptr insert_into_tree(root_ptr root,char *path,int access_permission);
 
+// // void delete_from_tree(root_ptr root,char *path);
 
-tree_node_ptr insert_into_tree(root_ptr root,char *path,int access_permission);
+// // void remove_permission(root_ptr root,char *path);
 
-// void delete_from_tree(root_ptr root,char *path);
+// void print_tree(struct tree_node* curr);
 
-// void remove_permission(root_ptr root,char *path);
-
-void print_tree(struct tree_node* curr);
-
-ss_info search_path_in_trie(char *path);
+// ss_info search_path_in_trie(char *path);
 
 
 
-void insert_into_tree_new(char *path, int access_permission, char *ip, int port);
-extern struct tree_node *root;
-void init_root();
+// void insert_into_tree_new(char *path, int access_permission, char *ip, int port);
+// extern struct tree_node *root;
+// void init_root();
 
 #define IP "127.0.0.1"
 
