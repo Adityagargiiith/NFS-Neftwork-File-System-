@@ -36,16 +36,50 @@ int main()
     for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
     {
         initial_data_of_ss.paths[i].permissions = 1; // hard coded for time being . Will change this later
-        printf("Enter path %d: ", i + 1);
+        printf("Enter path %d: ",(i + 1));
         scanf("%s", initial_data_of_ss.paths[i].path);
         initial_data_of_ss.paths[i].path[strlen(initial_data_of_ss.paths[i].path)] = '\0';
-        printf("%s\n", initial_data_of_ss.paths[i].path);
+        // printf("%s\n", initial_data_of_ss.paths[i].path);
+        // check if it is a file or directory
     }
-    for (int i = initial_data_of_ss.number_of_paths; i < MAX_PATHS; i++)
+    
+    int current_index = initial_data_of_ss.number_of_paths;
+    // printf("Here151\n");
+    for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
     {
-        initial_data_of_ss.paths[i].permissions = 0;
-        initial_data_of_ss.paths[i].path[0] = '\0';
+        struct stat path_stat;
+        char path2[100];
+        path2[0]='.';
+        strcpy(path2+1,initial_data_of_ss.paths[i].path);
+        path2[strlen(path2)]='\0';
+        stat(path2, &path_stat);
+        if (S_ISDIR(path_stat.st_mode))
+        {
+            // printf("Here1234\n");
+            DIR *dir;
+            struct dirent *curr_elem_of_dir;
+            if ((dir = opendir(path2)) != NULL)
+            {
+                curr_elem_of_dir = readdir(dir);
+                while (curr_elem_of_dir!=NULL)
+                {
+                    if (strcmp(curr_elem_of_dir->d_name,".")!=0  && strcmp(curr_elem_of_dir->d_name,"..")!=0)
+                    {
+                        /* code */
+                        strcpy(initial_data_of_ss.paths[current_index].path,initial_data_of_ss.paths[i].path);
+                        strcat(initial_data_of_ss.paths[current_index].path,"/");
+                        strcat(initial_data_of_ss.paths[current_index].path,curr_elem_of_dir->d_name);
+                        initial_data_of_ss.paths[current_index].permissions = 1;
+                        current_index++;
+                        initial_data_of_ss.number_of_paths++;
+                    }
+                    curr_elem_of_dir = readdir(dir);
+                }
+                
+            }
+        }
     }
+    
 
     int err_check = send(sock, &initial_data_of_ss, sizeof(initial_data_of_ss), 0);
     printf("Data sent to naming server\n");
