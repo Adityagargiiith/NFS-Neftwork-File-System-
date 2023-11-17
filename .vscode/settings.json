@@ -8,6 +8,7 @@
         "storage_server.h": "c",
         "read.h": "c",
         "naming_server.h": "c",
-        "errno.h": "c"
+        "errno.h": "c",
+        "trie.h": "c"
     }
 }

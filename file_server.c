@@ -52,21 +52,21 @@ int main()
     char file_path[100];
     scanf("%s",file_path);
     struct stat file_stat;
-    // check for the existence of the file
+   
     int file_status=stat(file_path,&file_stat);
     if(file_status<0)
     {
         printf("File does not exist\n");
         exit(0);
     }
-    // check for read permission
+    
     if(!(file_stat.st_mode & S_IRUSR))
     {
         printf("File does not have read permission\n");
         exit(0);
     }
     int send_size=file_stat.st_size;
-    // get the filename alongwith exetension
+    
     char file_name[100];
     int i=strlen(file_path)-1;
     while(i>=0 && file_path[i]!='/')
@@ -110,10 +110,5 @@ int main()
         number_of_bytes_sent+=sent_bytes;
     }
     printf("sending done\n");
-    
-    
-
-
-
     return 0;
 }

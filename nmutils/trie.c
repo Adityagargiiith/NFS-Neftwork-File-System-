@@ -113,6 +113,135 @@ void insert_into_tree_new(char *path, int access_permission, char *ip, int port)
         }
     }
 }
+void delete_subtree(struct tree_node *curr)
+{
+    if (curr==NULL)
+    {
+        return;
+    }
+    else
+    {
+        delete_subtree(curr->first_child);
+        delete_subtree(curr->next);
+        // free(curr);
+        if (curr->ss_ip)
+        {
+            free(curr->ss_ip);
+        }
+        if (curr->name)
+        {
+            free(curr->name);
+        }
+        free(curr);
+    }
+    
+}
+int delete_from_trie(char *path)
+{
+    if (path == NULL)
+    {
+        printf("Path is NULL\n");
+        return -1;
+    }
+    ss_info check_for_existence= search_path_in_trie(path);
+    if(check_for_existence.ss_port==-1)
+    {
+        printf("Path does not exist\n");
+        return -1;
+    }
+    int ct_of_slash = 0;
+    for (int i = 0; i < strlen(path); i++)
+    {
+        if (path[i] == '/')
+        {
+            ct_of_slash++;
+        }
+    }
+    char *path_levels_arr[ct_of_slash];
+    char *copy_of_path = (char *)malloc(sizeof(char) * strlen(path));
+    strcpy(copy_of_path, path);
+    char *token = strtok(copy_of_path, "/");
+    int i = 0;
+    while (token != NULL)
+    {
+        path_levels_arr[i] = token;
+        token = strtok(NULL, "/");
+        i++;
+    }
+    tree_node_ptr temp=root;
+    for(int i=0;i<(ct_of_slash-1);i++)
+    {
+        if(temp->first_child==NULL)
+        {
+            printf("Path does not exist\n");
+            return -1;
+        }
+        else
+        {
+            temp=temp->first_child;
+            while(temp->next!=NULL)
+            {
+                if(strcmp(temp->name,path_levels_arr[i])==0)
+                {
+                    break;
+                }
+                temp=temp->next;
+            }
+            if(strcmp(temp->name,path_levels_arr[i])==0)
+            {
+                continue;
+            }
+            else
+            {
+                printf("Path does not exist\n");
+                return -1;
+            }
+        }
+    }
+    struct tree_node* prev_parent;
+    prev_parent=temp;
+    temp=temp->first_child;
+    struct tree_node* prev=NULL;
+    if (temp == NULL)
+    {
+        printf("Path does not exist\n");
+        return -1;
+    }
+    while (temp!=NULL)
+    {
+        if (strcmp(temp->name, path_levels_arr[ct_of_slash - 1]) == 0)
+        {
+            break;
+        }
+        prev=temp;
+        temp = temp->next;
+    }
+    if (temp == NULL)
+    {
+        printf("Path does not exist\n");
+        return -1;
+    }
+    if (prev == NULL)
+    {
+        prev_parent->first_child = temp->next;
+    }
+    else
+    {
+        prev->next = temp->next;
+    }
+    delete_subtree(temp->first_child);
+    temp->first_child=NULL;
+    if (temp->ss_ip)
+    {
+        free(temp->ss_ip);
+    }
+    if (temp->name)
+    {
+        free(temp->name);
+    }
+    free(temp);
+    return 0;
+}
 void init_root()
 {
     root = (struct tree_node *)malloc(sizeof(struct tree_node));
