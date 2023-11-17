@@ -28,7 +28,7 @@ void makedirss(char* dirname, char* path, int client_socket_nm)
         perror("Error in mkdir() function call: ");
         return;
     }
-    printf("Directory created\n");
+    printf("Directory %s created\n",dirname);
 
     status = SUCCESS;
     if (send(client_socket_nm, &status, sizeof(status), 0) < 0)

@@ -15,6 +15,9 @@
 #include<pthread.h>
 #include "errorcode.h"
 #include "nmutils/makedir.h"
+#include "nmutils/deletedir.h"
+#include "nmutils/makefile.h"
+#include "nmutils/deletefile.h"
 
 #define CLIENT_PORT 51234
 
@@ -46,9 +49,9 @@ typedef struct ss_info ss_info;
 
 tree_node_ptr insert_into_tree(root_ptr root,char *path,int access_permission);
 
-void delete_from_tree(root_ptr root,char *path);
+// void delete_from_tree(root_ptr root,char *path);
 
-void remove_permission(root_ptr root,char *path);
+// void remove_permission(root_ptr root,char *path);
 
 void print_tree(struct tree_node* curr);
 

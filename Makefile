@@ -3,19 +3,16 @@ CFLAGS := -g
 
 # Path: command
 
-all: command client server
-
-command: command/*.c
-	$(CC) $(CFLAGS) -c command/*.c
-
+all: client naming_server storage_server
 
 client:
-	$(CC) $(CFLAGS) -o client client.c
+	$(CC) $(CFLAGS) -o client client.c command/*.c
 
+naming_server:
+	$(CC) $(CFLAGS) -o naming_server naming_server.c nmutils/*.c
 
-server:
-	$(CC) $(CFLAGS) -o server server.c
+storage_server:
+	$(CC) $(CFLAGS) -o storage_server storage_server.c ssutils/*.c
 
 clean:
-	rm -rf *.o client server command/*.o
-
+	rm -f client naming_server storage_server

@@ -77,6 +77,22 @@ void *client_req_handler(void *arg)
         char *path = strtok(NULL, " ");
         makedirnm(name_of_dir, path, client_socket);
     }
+    else if(strcmp(token, "deletedir") ==0)
+    {
+        char *path= strtok(NULL, " ");
+        deletedirnm(path,client_socket);
+    }
+    else if(strcmp(token,"makefile")==0)
+    {
+        char *filename=strtok(NULL," ");
+        char *path=strtok(NULL," ");
+        makefilenm(filename,path,client_socket);
+    }
+    else if(strcmp(token,"deletefile")==0)
+    {
+        char *path=strtok(NULL," ");
+        deletefilenm(path,client_socket);
+    }
 
     close(client_socket);
     return NULL;

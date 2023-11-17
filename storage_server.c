@@ -103,10 +103,21 @@ int main()
             char *path = strtok(NULL, " ");
             makedirss(dirname, path, client_socket_nm);
         }
-        else if (strcmp(token, "deletedir") ==0)
+        else if (strcmp(token, "deletedir") == 0)
         {
             char *path = strtok(NULL, " ");
             deletedirss(path, client_socket_nm);
+        }
+        else if (strcmp(token, "makefile") == 0)
+        {
+            char *filename = strtok(NULL, " ");
+            char *path = strtok(NULL, " ");
+            makefiless(filename, path, client_socket_nm);
+        }
+        else if(strcmp(token,"deletefile")==0)
+        {
+            char *path = strtok(NULL, " ");
+            deletefiless(path, client_socket_nm);
         }
 
         close(client_socket_nm);

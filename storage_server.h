@@ -10,17 +10,20 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <pthread.h>
 #include "errorcode.h"
 #include "ssutils/makedir.h"
 #include "ssutils/deletedir.h"
-
+#include "ssutils/makefile.h"
+#include "ssutils/deletefile.h"
 
 #define MAX_PATHS 1000
 
 struct details_of_path
 {
     char path[400];
-    int permissions;  // read ,write , exxecute
+    int permissions; // read ,write , exxecute
 };
 
 struct data_of_ss
@@ -29,6 +32,5 @@ struct data_of_ss
     int number_of_paths;
     struct details_of_path paths[MAX_PATHS];
 };
-
 
 #endif
