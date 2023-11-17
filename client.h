@@ -12,6 +12,8 @@
 #include "command/read.h"
 #include "command/write.h"
 #include "command/info.h"
+#include "command/copyfile.h"
+#include "command/copydir.h"
 #include <wait.h>
 
 #define NM_PORT 51234

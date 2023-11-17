@@ -1,19 +1,48 @@
 #include "storage_server.h"
 
-int main()
+
+int get_random_port_number()
 {
-    // tcp client
-    // int sock = 0;
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == -1)
+    {
+        perror("Error in socket() function call: ");
+        exit(1);
+    }
+    struct sockaddr_in server_address;
+    memset(&server_address, 0, sizeof(server_address));
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(0);
+    server_address.sin_addr.s_addr = inet_addr(SS_IP);
+
+    int bind_success = bind(sock, (struct sockaddr *)&server_address, sizeof(server_address));
+    if (bind_success == -1)
+    {
+        perror("Error in bind() function call: ");
+        exit(1);
+    }
+
+    struct sockaddr_in temp;
+    int len = sizeof(temp);
+    getsockname(sock, (struct sockaddr *)&temp, (socklen_t *)&len);
+    int port_number = ntohs(temp.sin_port);
+    close(sock);
+    return port_number;
+}
+
+int nm_conn_port;
+
+void *naming_server_init(void *)
+{
     int sock;
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1)
     {
-        /* code */
         perror("Error in socket() function call: ");
         exit(1);
     }
-    int server_port_number = 5572;
-    char *ip_address = "127.0.0.1";
+    int server_port_number = NM_INIT_PORT;
+    char *ip_address = NM_CONN_IP;
     char buffer[4096];
     struct sockaddr_in server_address;
     memset(&server_address, 0, sizeof(server_address));
@@ -24,66 +53,72 @@ int main()
     int connect_success = connect(sock, (struct sockaddr *)&server_address, sizeof(server_address));
     if (connect_success == -1)
     {
-        /* code */
         perror("Error in connect() function call: ");
         exit(1);
     }
 
     struct data_of_ss initial_data_of_ss;
+    initial_data_of_ss.port_number = get_random_port_number();
+    nm_conn_port = initial_data_of_ss.port_number;
+    printf("Enter number of paths: ");
     scanf("%d", &initial_data_of_ss.number_of_paths);
-    initial_data_of_ss.port_number = 6677; // hard coded for time being . Will change this later
     initial_data_of_ss.paths[initial_data_of_ss.number_of_paths];
     for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
     {
         initial_data_of_ss.paths[i].permissions = 1; // hard coded for time being . Will change this later
-        printf("Enter path %d: ",(i + 1));
+        printf("Enter path %d: ", (i + 1));
         scanf("%s", initial_data_of_ss.paths[i].path);
         initial_data_of_ss.paths[i].path[strlen(initial_data_of_ss.paths[i].path)] = '\0';
         // printf("%s\n", initial_data_of_ss.paths[i].path);
         // check if it is a file or directory
     }
-    
+
     int current_index = initial_data_of_ss.number_of_paths;
     // printf("Here151\n");
     for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
     {
         struct stat path_stat;
         char path2[100];
-        path2[0]='.';
-        strcpy(path2+1,initial_data_of_ss.paths[i].path);
-        path2[strlen(path2)]='\0';
+        path2[0] = '.';
+        strcpy(path2 + 1, initial_data_of_ss.paths[i].path);
+        path2[strlen(path2)] = '\0';
         stat(path2, &path_stat);
         if (S_ISDIR(path_stat.st_mode))
         {
-            // printf("Here1234\n");
             DIR *dir;
             struct dirent *curr_elem_of_dir;
             if ((dir = opendir(path2)) != NULL)
             {
                 curr_elem_of_dir = readdir(dir);
-                while (curr_elem_of_dir!=NULL)
+                while (curr_elem_of_dir != NULL)
                 {
-                    if (strcmp(curr_elem_of_dir->d_name,".")!=0  && strcmp(curr_elem_of_dir->d_name,"..")!=0)
+                    if (strcmp(curr_elem_of_dir->d_name, ".") != 0 && strcmp(curr_elem_of_dir->d_name, "..") != 0)
                     {
-                        /* code */
-                        strcpy(initial_data_of_ss.paths[current_index].path,initial_data_of_ss.paths[i].path);
-                        strcat(initial_data_of_ss.paths[current_index].path,"/");
-                        strcat(initial_data_of_ss.paths[current_index].path,curr_elem_of_dir->d_name);
+                        strcpy(initial_data_of_ss.paths[current_index].path, initial_data_of_ss.paths[i].path);
+                        strcat(initial_data_of_ss.paths[current_index].path, "/");
+                        strcat(initial_data_of_ss.paths[current_index].path, curr_elem_of_dir->d_name);
                         initial_data_of_ss.paths[current_index].permissions = 1;
                         current_index++;
                         initial_data_of_ss.number_of_paths++;
                     }
                     curr_elem_of_dir = readdir(dir);
                 }
-                
             }
         }
     }
-    
 
     int err_check = send(sock, &initial_data_of_ss, sizeof(initial_data_of_ss), 0);
+    if (err_check == -1)
+    {
+        perror("Error in send() function call: ");
+        return NULL;
+    }
     printf("Data sent to naming server\n");
+    return NULL;
+}
 
+void *naming_server_communication(void *)
+{
     int socket_nm = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_nm == -1)
     {
@@ -95,8 +130,8 @@ int main()
 
     memset(&server_address_nm, 0, sizeof(server_address_nm));
     server_address_nm.sin_family = AF_INET;
-    server_address_nm.sin_port = htons(6677);
-    server_address_nm.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server_address_nm.sin_port = htons(nm_conn_port);
+    server_address_nm.sin_addr.s_addr = inet_addr(SS_IP);
 
     if (bind(socket_nm, (struct sockaddr *)&server_address_nm, sizeof(server_address_nm)) == -1)
     {
@@ -123,6 +158,7 @@ int main()
         }
 
         char *buffer1 = (char *)malloc(4096);
+        memset(buffer1, 0, 4096);
         int bytes_received = recv(client_socket_nm, buffer1, 4096, 0);
         if (bytes_received == -1)
         {
@@ -148,7 +184,7 @@ int main()
             char *path = strtok(NULL, " ");
             makefiless(filename, path, client_socket_nm);
         }
-        else if(strcmp(token,"deletefile")==0)
+        else if (strcmp(token, "deletefile") == 0)
         {
             char *path = strtok(NULL, " ");
             deletefiless(path, client_socket_nm);
@@ -156,8 +192,27 @@ int main()
 
         close(client_socket_nm);
     }
+}
 
-    // close(sock);
+void *client_thread(void *)
+{
+    return NULL;
+}
 
+int main()
+{
+    pthread_t thread_id;
+    pthread_create(&thread_id, NULL, naming_server_init, NULL);
+
+    pthread_join(thread_id, NULL);
+
+    pthread_t thread_id2;
+    pthread_create(&thread_id2, NULL, naming_server_communication, NULL);
+
+    pthread_t thread_id3;
+    pthread_create(&thread_id3, NULL, client_thread, NULL);
+
+    pthread_join(thread_id2, NULL);
+    pthread_join(thread_id3, NULL);
     return 0;
 }

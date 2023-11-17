@@ -13,14 +13,16 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include "errorcode.h"
+#include <semaphore.h>
 #include "ssutils/makedir.h"
 #include "ssutils/deletedir.h"
 #include "ssutils/makefile.h"
 #include "ssutils/deletefile.h"
 
 #define MAX_PATHS 1000
-#define NM_CONN_PORT 5572
+#define NM_INIT_PORT 5572
 #define NM_CONN_IP "127.0.0.1"
+#define SS_IP "127.0.0.1"
 
 struct details_of_path
 {
