@@ -71,6 +71,7 @@ void *client_req_handler(void *arg)
     pthread_detach(pthread_self());
     int client_socket = *((int *)arg);
     char *msg = (char *)malloc(sizeof(char) * 100);
+    memset(msg, 0, 100);
     if (recv(client_socket, msg, 100, 0) == -1)
     {
         perror("Error in recv() function call: ");

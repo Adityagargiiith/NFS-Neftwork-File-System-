@@ -86,7 +86,7 @@ void read_file(char *input)
         struct sockaddr_in serv_addr2;
         memset(&serv_addr2, 0, sizeof(serv_addr2));
         serv_addr2.sin_family = AF_INET;
-        serv_addr2.sin_port = htons(ss->ss_port);
+        serv_addr2.sin_port = htons(ss->client_port);
         serv_addr2.sin_addr.s_addr = inet_addr(ss->ss_ip);
 
         int ret2 = connect(sockfd2, (struct sockaddr *)&serv_addr2, sizeof(serv_addr2));

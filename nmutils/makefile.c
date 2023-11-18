@@ -63,7 +63,7 @@ void makefilenm(char *filename, char* path , int client_soket)
 
     if(status == SUCCESS)
     {
-        insert_into_tree_new(new_path, 1, ans.ss_ip, ans.ss_port);
+        insert_into_tree_new(new_path, 1, ans.ss_ip, ans.ss_port, ans.client_port, ans.s2s_port);
     }
     else
     {

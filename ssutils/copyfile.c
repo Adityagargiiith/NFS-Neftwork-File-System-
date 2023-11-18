@@ -2,22 +2,29 @@
 
 void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
 {
+    printf("In copyfilereceive\n");
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0)
     {
         printf("Socket creation failed\n");
         return;
     }
+    printf("Socket created\n");
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(ss_to_receive->s2s_port);
     server_addr.sin_addr.s_addr = inet_addr(ss_to_receive->ss_ip);
+    printf("IP: %s\n", ss_to_receive->ss_ip);
+    printf("Port: %d\n", ss_to_receive->s2s_port);
+
     int connect_status = connect(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr));
     if (connect_status < 0)
     {
         printf("Connection failed\n");
         return;
     }
+
+    printf("Connected\n");
 
     char *temp_path = (char *)malloc(sizeof(char) * 100);
     strcpy(temp_path, ".");
@@ -32,6 +39,8 @@ void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
         close(server_fd);
         return;
     }
+
+    printf("Directory changed\n");
 
     char file_name[100];
     read(server_fd, file_name, sizeof(file_name));
@@ -64,7 +73,7 @@ void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
     return;
 }
 
-void copyfiless(char *src, ss_info *ss_to_send, int client_socket_nm)
+void copyfiless(char *src, ss_info *ss_to_send, int client_socket_nm,int s2s_port)
 {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0)
@@ -88,6 +97,9 @@ void copyfiless(char *src, ss_info *ss_to_send, int client_socket_nm)
         printf("Listening failed\n");
         return;
     }
+
+    printf("Listening\n");
+
     struct sockaddr_in client_addr;
     int client_addr_len = sizeof(client_addr);
     int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
@@ -97,6 +109,8 @@ void copyfiless(char *src, ss_info *ss_to_send, int client_socket_nm)
         close(server_fd);
         return;
     }
+
+    printf("Accepted\n");
 
     char *temp_path = (char *)malloc(sizeof(char) * 100);
     strcpy(temp_path, ".");

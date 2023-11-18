@@ -58,6 +58,7 @@ void copyfile(char *input)
     int len = strlen(msg);
     msg[len] = '\0';
 
+    printf("Message sent: %s\n", msg);
     if (send(sockfd, msg, strlen(msg), 0) < 0)
     {
         printf("Error in sending message to naming server\n");

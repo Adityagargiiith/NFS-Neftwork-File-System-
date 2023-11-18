@@ -2,6 +2,8 @@
 
 void copyfilenm(char *src, char *dest, int client_socket)
 {
+    printf("Src: %s\n", src);
+    printf("Dest: %s\n", dest);
     ss_info ans = search_path_in_trie(src);
     if (ans.ss_port == -1)
     {
@@ -25,6 +27,9 @@ void copyfilenm(char *src, char *dest, int client_socket)
         }
         return;
     }
+
+    printf("Port 1: %d\n", ans.ss_port);
+    printf("Port 2: %d\n", ans1.ss_port);
 
     int sock_ss = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_ss == -1)
@@ -50,13 +55,16 @@ void copyfilenm(char *src, char *dest, int client_socket)
     strcat(msg_to_ss, src);
 
     msg_to_ss[strlen(msg_to_ss)] = '\0';
+    printf("Msg to ss: %s\n", msg_to_ss);
     if (send(sock_ss, msg_to_ss, strlen(msg_to_ss), 0) == -1)
     {
         perror("Error in send() function call: ");
         return;
     }
 
-    if(send(sock_ss,&ans1,sizeof(ans1),0)==-1)
+    usleep(1000);
+
+    if (send(sock_ss, &ans1, sizeof(ans1), 0) == -1)
     {
         perror("Error in send() function call: ");
         return;
@@ -86,6 +94,7 @@ void copyfilenm(char *src, char *dest, int client_socket)
     strcat(msg_to_ss1, dest);
 
     msg_to_ss1[strlen(msg_to_ss1)] = '\0';
+    printf("Msg to ss1: %s\n", msg_to_ss1);
 
     if (send(sock_ss1, msg_to_ss1, strlen(msg_to_ss1), 0) == -1)
     {
@@ -93,11 +102,15 @@ void copyfilenm(char *src, char *dest, int client_socket)
         return;
     }
 
-    if(send(sock_ss1,&ans,sizeof(ans),0)==-1)
+    usleep(1000);
+
+    if (send(sock_ss1, &ans, sizeof(ans), 0) == -1)
     {
         perror("Error in send() function call: ");
         return;
     }
+
+    printf("Sent\n");
 
     int status;
     if (recv(sock_ss, &status, sizeof(status), 0) == -1)

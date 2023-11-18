@@ -62,7 +62,7 @@ void makedirnm(char *name_of_dir, char *path, int client_socket)
 
     if (status == SUCCESS)
     {
-        insert_into_tree_new(new_path, 1, ans.ss_ip, ans.ss_port);
+        insert_into_tree_new(new_path, 1, ans.ss_ip, ans.ss_port, ans.client_port, ans.s2s_port);
     }
     else
     {
