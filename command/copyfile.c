@@ -84,9 +84,29 @@ void copyfile(char *input)
     {
         printf("Destination file not found\n");
     }
+    else if (status == SRC_IS_DIR)
+    {
+        printf("Source is a directory\n");
+    }
+    else if (status == DEST_IS_DIR)
+    {
+        printf("Destination is a directory\n");
+    }
+    else if (status == SRC_IS_FILE)
+    {
+        printf("Source is a file\n");
+    }
+    else if (status == DEST_IS_FILE)
+    {
+        printf("Destination is a file\n");
+    }
+    else if (status == COPY_ERROR)
+    {
+        printf("Error in copying file\n");
+    }
     else
     {
-        printf("Unknown error while copying file\n");
+        printf("Unknown error occured while copying file\n");
     }
 
     return;

@@ -14,10 +14,32 @@ void copydirnm(char *src, char *dest, int client_socket)
         return;
     }
 
+    if(ans.dir_or_file == IS_FILE)
+    {
+        int status = SRC_IS_FILE;
+        if (send(client_socket, &status, sizeof(status), 0) == -1)
+        {
+            perror("Error in send() function call: ");
+            return;
+        }
+        return;
+    }
+
     ss_info ans1 = search_path_in_trie(dest);
     if (ans1.ss_port == -1)
     {
         int status = DEST_NOT_FOUND;
+        if (send(client_socket, &status, sizeof(status), 0) == -1)
+        {
+            perror("Error in send() function call: ");
+            return;
+        }
+        return;
+    }
+
+    if(ans1.dir_or_file == IS_FILE)
+    {
+        int status = DEST_IS_FILE;
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");

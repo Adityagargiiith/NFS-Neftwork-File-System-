@@ -2,14 +2,12 @@
 
 void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
 {
-    printf("In copyfilereceive\n");
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0)
     {
         printf("Socket creation failed\n");
         return;
     }
-    printf("Socket created\n");
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(ss_to_receive->s2s_port);
@@ -24,14 +22,15 @@ void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
         return;
     }
 
-    printf("Connected\n");
-
     char *temp_path = (char *)malloc(sizeof(char) * 100);
     strcpy(temp_path, ".");
     strcat(temp_path, dest);
     temp_path[strlen(temp_path)] = '\0';
 
-    //change directory
+    //store the current directory
+    char current_directory[100];
+    getcwd(current_directory, sizeof(current_directory));
+
     int status = chdir(temp_path);
     if (status < 0)
     {
@@ -40,7 +39,6 @@ void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
         return;
     }
 
-    printf("Directory changed\n");
 
     char file_name[100];
     read(server_fd, file_name, sizeof(file_name));
@@ -69,6 +67,22 @@ void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
     }
 
     printf("File recieved\n");
+
+    //change back to the original directory
+    status = chdir(current_directory);
+    if (status < 0)
+    {
+        printf("Error in changing directory\n");
+        close(server_fd);
+        return;
+    }
+
+    int status1 = SUCCESS;
+    if (send(client_socket_nm, &status1, sizeof(status1), 0) == -1)
+    {
+        perror("Error in send() function call: ");
+        return;
+    }
     close(server_fd);
     return;
 }
@@ -176,6 +190,14 @@ void copyfiless(char *src, ss_info *ss_to_send, int client_socket_nm,int s2s_por
     }
 
     printf("sending done\n");
+
+    int status=SUCCESS;
+    if (send(client_socket_nm, &status, sizeof(status), 0) == -1)
+    {
+        perror("Error in send() function call: ");
+        return;
+    }
+    
     close(server_fd);
     return;
 }

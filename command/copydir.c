@@ -58,6 +58,8 @@ void copydir(char *input)
     int len = strlen(msg);
     msg[len] = '\0';
 
+    printf("Msg to naming server: %s\n", msg);
+
     if (send(sockfd, msg, strlen(msg), 0) < 0)
     {
         printf("Error in sending message to naming server\n");
@@ -71,6 +73,9 @@ void copydir(char *input)
         return;
     }
 
+    printf("Status recieved from naming server: %d\n", status);
+
+
     if(status == SUCCESS)
     {
         printf("Directory copied successfully\n");
@@ -82,6 +87,26 @@ void copydir(char *input)
     else if (status == DEST_NOT_FOUND)
     {
         printf("Destination directory not found\n");
+    }
+    else if(status == SRC_IS_FILE)
+    {
+        printf("Source is a file\n");
+    }
+    else if(status == DEST_IS_FILE)
+    {
+        printf("Destination is a file\n");
+    }
+    else if(status == SRC_IS_DIR)
+    {
+        printf("Source is a directory\n");
+    }
+    else if(status == DEST_IS_DIR)
+    {
+        printf("Destination is a directory\n");
+    }
+    else if(status == COPY_ERROR)
+    {
+        printf("Error in copying directory\n");
     }
     else
     {

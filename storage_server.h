@@ -20,7 +20,7 @@
 #include "ssutils/deletefile.h"
 #include "nmutils/trie.h"
 #include "ssutils/copyfile.h"
-#include "nmutils/copydir.h"
+#include "ssutils/copydir.h"
 
 #define MAX_PATHS 1000
 #define NM_INIT_PORT 5572

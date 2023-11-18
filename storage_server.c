@@ -201,11 +201,9 @@ void *naming_server_communication(void *)
         else if (strcmp(token, "copyfile") == 0)
         {
             char *temp = strtok(NULL, " ");
-            printf("Temp: %s\n", temp);
             if (strcmp(temp, "dest") == 0)
             {
                 char *dest = strtok(NULL, " ");
-                printf("Dest: %s\n", dest);
                 ss_info *ss_to_receive = (ss_info *)malloc(sizeof(ss_info));
                 int bytes_received = recv(client_socket_nm, ss_to_receive, sizeof(ss_info), 0);
                 if (bytes_received == -1)
@@ -219,7 +217,6 @@ void *naming_server_communication(void *)
             else if (strcmp(temp, "src") == 0)
             {
                 char *src = strtok(NULL, " ");
-                printf("Src: %s\n", src);
                 ss_info *ss_to_send = (ss_info *)malloc(sizeof(ss_info));
                 int bytes_received = recv(client_socket_nm, ss_to_send, sizeof(ss_info), 0);
                 if (bytes_received == -1)
@@ -229,6 +226,36 @@ void *naming_server_communication(void *)
                 }
 
                 copyfiless(src, ss_to_send, client_socket_nm, s2s_conn_port);
+            }
+        }
+        else if(strcmp(token, "copydir")==0)
+        {
+            char *temp = strtok(NULL, " ");
+            if (strcmp(temp, "dest") == 0)
+            {
+                char *dest = strtok(NULL, " ");
+                ss_info *ss_to_receive = (ss_info *)malloc(sizeof(ss_info));
+                int bytes_received = recv(client_socket_nm, ss_to_receive, sizeof(ss_info), 0);
+                if (bytes_received == -1)
+                {
+                    perror("Error in recv() function call: ");
+                    exit(1);
+                }
+                
+                copydirreceive(dest, ss_to_receive, client_socket_nm);
+            }
+            else if (strcmp(temp, "src") == 0)
+            {
+                char *src = strtok(NULL, " ");
+                ss_info *ss_to_send = (ss_info *)malloc(sizeof(ss_info));
+                int bytes_received = recv(client_socket_nm, ss_to_send, sizeof(ss_info), 0);
+                if (bytes_received == -1)
+                {
+                    perror("Error in recv() function call: ");
+                    exit(1);
+                }
+
+                copydirss(src, ss_to_send, client_socket_nm, s2s_conn_port);
             }
         }
 

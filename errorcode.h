@@ -14,6 +14,9 @@
 #define SRC_NOT_FOUND 111 // Source file/directory not found
 #define DEST_NOT_FOUND 112 // Destination file/directory not found
 #define COPY_ERROR 113 // Error in copying file/directory
-
+#define SRC_IS_DIR 114 // Source is a directory
+#define DEST_IS_DIR 115 // Destination is a directory
+#define SRC_IS_FILE 116 // Source is a file
+#define DEST_IS_FILE 117 // Destination is a file
 
 #endif
