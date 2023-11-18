@@ -5,10 +5,14 @@ void rec_file(int server_fd)
     char file_name[100];
     memset(file_name, 0, sizeof(file_name));
     read(server_fd, file_name, sizeof(file_name));
-    printf("File name recieved is %s\n", file_name);
     // int file_fd = open(file_name, O_RDONLY);
     // create
     int file_fd = open(file_name, O_RDONLY | O_WRONLY | O_CREAT, 0666);
+    if (file_fd == -1)
+    {
+        perror("Error in open() function call: ");
+        exit(1);
+    }
     int number_of_bytes_to_recieve;
     read(server_fd, &number_of_bytes_to_recieve, sizeof(number_of_bytes_to_recieve));
     printf("Number of bytes to recieve is %d\n", number_of_bytes_to_recieve);
@@ -52,8 +56,23 @@ void rec_dir(int server_fd)
     mkdir(dir_name, 0777);
 }
 
-void copydirreceive(char *dest, ss_info * ss_to_receive, int client_socket_nm)
+void copydirreceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
 {
+
+    char *original = (char *)malloc(sizeof(char) * 100);
+    // get current working directory
+    getcwd(original, 100);
+
+    char *temp = (char *)malloc(sizeof(char) * 100);
+    strcpy(temp, ".");
+    strcat(temp, dest);
+
+    int status = chdir(temp);
+    if (status == -1)
+    {
+        perror("Error in chdir() function call: ");
+        return;
+    }
 
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == -1)
@@ -91,23 +110,32 @@ void copydirreceive(char *dest, ss_info * ss_to_receive, int client_socket_nm)
     }
     close(server_fd);
 
-    int status = SUCCESS;
-    if (send(client_socket_nm, &status, sizeof(status), 0) == -1)
+    int status1 = SUCCESS;
+    if (send(client_socket_nm, &status1, sizeof(status1), 0) == -1)
     {
         perror("Error in send() function call: ");
+        return;
+    }
+
+    status = chdir(original);
+    if (status == -1)
+    {
+        perror("Error in chdir() function call: ");
         return;
     }
 
     return;
 }
 
-int count_no_of_paths(char *src)
+int count_no_of_paths(char src[])
 {
-    char *path = (char *)malloc(sizeof(char) * 100);
+    char path[100];
+    memset(path, 0, sizeof(path));
     strcpy(path, src);
     path[strlen(path)] = '\0';
     int dir_or_file = 1;
-    char *dir_name = (char *)malloc(sizeof(char) * 100);
+    char dir_name[100];
+    memset(dir_name, 0, sizeof(dir_name));
     strcpy(dir_name, path);
     dir_name[strlen(dir_name)] = '\0';
     DIR *dir = opendir(dir_name);
@@ -147,9 +175,15 @@ int count_no_of_paths(char *src)
     return count;
 }
 
-int send_file(char *path, int client_fd)
+int send_file(char path[], int client_fd, char send_path[])
 {
-    char *file_path = (char *)malloc(sizeof(char) * 100);
+    char temp_path[100];
+    memset(temp_path, 0, sizeof(temp_path));
+    strcpy(temp_path, send_path);
+    temp_path[strlen(temp_path)] = '\0';
+
+    char file_path[100];
+    memset(file_path, 0, sizeof(file_path));
     strcpy(file_path, path);
     file_path[strlen(file_path)] = '\0';
 
@@ -168,12 +202,13 @@ int send_file(char *path, int client_fd)
     }
     int size_of_file = path_stat.st_size;
 
-    char *file_name = (char *)malloc(sizeof(char) * 100);
+    char file_name[100];
+    memset(file_name, 0, sizeof(file_name));
     strcpy(file_name, file_path);
     file_name[strlen(file_name)] = '\0';
     int dir_or_file = 0;
     write(client_fd, &dir_or_file, sizeof(dir_or_file));
-    write(client_fd, file_name, sizeof(file_name));
+    write(client_fd, temp_path, sizeof(temp_path));
     write(client_fd, &size_of_file, sizeof(size_of_file));
     int file_fd = open(file_path, O_RDONLY);
     int number_of_bytes_to_send = size_of_file;
@@ -211,17 +246,24 @@ int send_file(char *path, int client_fd)
     }
 }
 
-int send_dir(char *src, int client_fd)
+int send_dir(char src[], int client_fd, char send_path[])
 {
-    char *path = (char *)malloc(sizeof(char) * 100);
+    char temp_path[100];
+    memset(temp_path, 0, sizeof(temp_path));
+    strcpy(temp_path, send_path);
+    temp_path[strlen(temp_path)] = '\0';
+
+    char path[100];
+    memset(path, 0, sizeof(path));
     strcpy(path, src);
     path[strlen(path)] = '\0';
     int dir_or_file = 1;
-    char *dir_name = (char *)malloc(sizeof(char) * 100);
+    char dir_name[100];
+    memset(dir_name, 0, sizeof(dir_name));
     strcpy(dir_name, path);
     dir_name[strlen(dir_name)] = '\0';
     write(client_fd, &dir_or_file, sizeof(dir_or_file));
-    write(client_fd, dir_name, sizeof(dir_name));
+    write(client_fd, temp_path, sizeof(temp_path));
     DIR *dir = opendir(dir_name);
     struct dirent *curr_elem_of_dir;
     curr_elem_of_dir = readdir(dir);
@@ -234,6 +276,12 @@ int send_dir(char *src, int client_fd)
             strcat(path, "/");
             strcat(path, curr_elem_of_dir->d_name);
             path[strlen(path)] = '\0';
+
+            memset(temp_path, 0, sizeof(temp_path));
+            strcpy(temp_path, send_path);
+            strcat(temp_path, "/");
+            strcat(temp_path, curr_elem_of_dir->d_name);
+
             struct stat path_stat;
             stat(path, &path_stat);
             if (S_ISDIR(path_stat.st_mode))
@@ -246,11 +294,11 @@ int send_dir(char *src, int client_fd)
             }
             if (dir_or_file == 1)
             {
-                send_dir(path, client_fd);
+                send_dir(path, client_fd, temp_path);
             }
             else
             {
-                send_file(path, client_fd);
+                send_file(path, client_fd, temp_path);
             }
         }
         curr_elem_of_dir = readdir(dir);
@@ -297,13 +345,35 @@ void copydirss(char *src, ss_info *ss_to_send, int client_socket_nm, int s2s_con
         return;
     }
 
-    char *dir_name = (char *)malloc(sizeof(char) * 100);
+    printf("Second storage server connected\n");
+
+    char temp2[100];
+    memset(temp2, 0, sizeof(temp2));
+    strcpy(temp2, ".");
+    strcat(temp2, src);
+
+    char *token_temp2 = (char *)malloc(sizeof(char) * 100);
+    strcpy(token_temp2, temp2);
+
+
+    char *token = strtok(token_temp2, "/");
+    while (token != NULL)
+    {
+        memset(temp2, 0, sizeof(temp2));
+        strcpy(temp2, "./");
+        strcat(temp2, token);
+        temp2[strlen(temp2)] = '\0';
+        token = strtok(NULL, "/");
+    }
+
+    char dir_name[100];
     memset(dir_name, 0, sizeof(dir_name));
-    strcpy(dir_name, src);
+    strcpy(dir_name, ".");
+    strcat(dir_name, src);
     dir_name[strlen(dir_name)] = '\0';
     int ct = count_no_of_paths(dir_name);
     write(client_socket_ss, &ct, sizeof(ct));
-    send_dir(dir_name, client_socket_ss);
+    send_dir(dir_name, client_socket_ss, temp2);
 
     close(client_socket_ss);
     close(sock_ss);

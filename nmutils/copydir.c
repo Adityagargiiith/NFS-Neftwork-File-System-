@@ -78,6 +78,8 @@ void copydirnm(char *src, char *dest, int client_socket)
         return;
     }
 
+    usleep(1000);
+
     if(send(sock_ss,&ans1,sizeof(ans1),0)==-1)
     {
         perror("Error in send() function call: ");
@@ -113,6 +115,8 @@ void copydirnm(char *src, char *dest, int client_socket)
         perror("Error in send() function call: ");
         return;
     }
+
+    usleep(1000);
 
     if(send(sock_ss1,&ans,sizeof(ans),0)==-1)
     {

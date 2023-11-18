@@ -3,8 +3,7 @@
 
 // 1 for dir and 2 for file
 struct tree_node *root;
- FILE* log_file;
-
+FILE *log_file;
 
 void *ss_init_thread(void *)
 {
@@ -63,7 +62,7 @@ void *ss_init_thread(void *)
 
         for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
         {
-            insert_into_tree_new(initial_data_of_ss.paths[i].path, initial_data_of_ss.paths[i].permissions, ip_address_of_ss, initial_data_of_ss.port_number, initial_data_of_ss.client_port, initial_data_of_ss.s2s_port,initial_data_of_ss.paths[i].dir_or_file);
+            insert_into_tree_new(initial_data_of_ss.paths[i].path, initial_data_of_ss.paths[i].permissions, ip_address_of_ss, initial_data_of_ss.port_number, initial_data_of_ss.client_port, initial_data_of_ss.s2s_port, initial_data_of_ss.paths[i].dir_or_file);
         }
     }
 }
@@ -80,8 +79,8 @@ void *client_req_handler(void *arg)
         exit(1);
     }
     char *token = strtok(msg, " ");
-     fprintf(log_file, "Received a request from client: %s\n", msg);
-fflush(log_file);  // Make sure the log message is immediately written to the file
+    fprintf(log_file, "Received a request from client: %s\n", msg);
+    fflush(log_file); // Make sure the log message is immediately written to the file
 
     if (strcmp(token, "makedir") == 0)
     {
@@ -110,6 +109,12 @@ fflush(log_file);  // Make sure the log message is immediately written to the fi
         char *src = strtok(NULL, " ");
         char *dest = strtok(NULL, " ");
         copyfilenm(src, dest, client_socket);
+    }
+    else if (strcmp(token, "copydir") == 0)
+    {
+        char *src = strtok(NULL, " ");
+        char *dest = strtok(NULL, " ");
+        copydirnm(src, dest, client_socket);
     }
 
     close(client_socket);
@@ -163,12 +168,12 @@ void *client_thread(void *)
 
 int main()
 {
-      log_file = fopen("naming_server.log", "a");
+    log_file = fopen("naming_server.log", "a");
     pthread_t ss_init_thread_id;
     pthread_create(&ss_init_thread_id, NULL, ss_init_thread, NULL);
     pthread_t client_thread_id;
     pthread_create(&client_thread_id, NULL, client_thread, NULL);
     pthread_join(ss_init_thread_id, NULL);
-       fclose(log_file);
+    fclose(log_file);
     return 0;
 }
