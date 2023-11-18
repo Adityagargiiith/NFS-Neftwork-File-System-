@@ -1,6 +1,6 @@
 #include "trie.h"
 
-void insert_into_tree_new(char *path, int access_permission, char *ip, int port,int client_port1,int s2s_port1)
+void insert_into_tree_new(char *path, int access_permission, char *ip, int port,int client_port1,int s2s_port1,int dir_or_file1)
 {
     int ct_of_slash = 0;
     // printf("%s\n", path);
@@ -72,10 +72,11 @@ void insert_into_tree_new(char *path, int access_permission, char *ip, int port,
         new_node->access_permissiom = access_permission;
         new_node->first_child = NULL;
         new_node->next = NULL;
-        new_node->dir_or_file = 2;
+        // new_node->dir_or_file = 2;
         new_node->ss_port = port;
         new_node->client_port = client_port1;
         new_node->s2s_port = s2s_port1;
+        new_node->dir_or_file=dir_or_file1;
         new_node->ss_ip = (char *)malloc(sizeof(char) * (strlen(ip) + 1));
         strcpy(new_node->ss_ip, ip);
         temp->first_child = new_node;
@@ -106,10 +107,11 @@ void insert_into_tree_new(char *path, int access_permission, char *ip, int port,
             new_node->access_permissiom = access_permission;
             new_node->first_child = NULL;
             new_node->next = NULL;
-            new_node->dir_or_file = 2;
+            // new_node->dir_or_file = 2;
             new_node->ss_port = port;
             new_node->client_port = client_port1;
             new_node->s2s_port = s2s_port1;
+            new_node->dir_or_file=dir_or_file1;
             new_node->ss_ip = (char *)malloc(sizeof(char) * (strlen(ip) + 1));
             strcpy(new_node->ss_ip, ip);
             temp->next = new_node;

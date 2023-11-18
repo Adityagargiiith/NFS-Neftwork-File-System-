@@ -61,7 +61,7 @@ void *ss_init_thread(void *)
 
         for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
         {
-            insert_into_tree_new(initial_data_of_ss.paths[i].path, initial_data_of_ss.paths[i].permissions, ip_address_of_ss, initial_data_of_ss.port_number, initial_data_of_ss.client_port, initial_data_of_ss.s2s_port);
+            insert_into_tree_new(initial_data_of_ss.paths[i].path, initial_data_of_ss.paths[i].permissions, ip_address_of_ss, initial_data_of_ss.port_number, initial_data_of_ss.client_port, initial_data_of_ss.s2s_port,initial_data_of_ss.paths[i].dir_or_file);
         }
     }
 }

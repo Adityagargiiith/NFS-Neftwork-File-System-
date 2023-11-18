@@ -87,6 +87,7 @@ void *naming_server_init(void *)
         stat(path2, &path_stat);
         if (S_ISDIR(path_stat.st_mode))
         {
+            initial_data_of_ss.paths[i].dir_or_file = 1;
             DIR *dir;
             struct dirent *curr_elem_of_dir;
             if ((dir = opendir(path2)) != NULL)
@@ -106,6 +107,10 @@ void *naming_server_init(void *)
                     curr_elem_of_dir = readdir(dir);
                 }
             }
+        }
+        else
+        {
+            initial_data_of_ss.paths[i].dir_or_file = 0;
         }
     }
 

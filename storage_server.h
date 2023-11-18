@@ -30,7 +30,8 @@
 struct details_of_path
 {
     char path[400];
-    int permissions; // read ,write , exxecute
+    int permissions;
+    int dir_or_file;
 };
 
 struct data_of_ss

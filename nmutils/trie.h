@@ -31,7 +31,7 @@ struct ss_info
 
 typedef struct ss_info ss_info;
 
-void insert_into_tree_new(char *path, int access_permission, char *ip, int port,int client_port1,int s2s_port1);
+void insert_into_tree_new(char *path, int access_permission, char *ip, int port,int client_port1,int s2s_port1,int dir_or_file1);
 void init_root();
 ss_info search_path_in_trie(char *path);
 void print_tree(struct tree_node *curr);
