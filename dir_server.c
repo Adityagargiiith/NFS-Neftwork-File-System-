@@ -221,7 +221,8 @@ int send_file(char file_path2[], int client_fd)
         int sent_bytes = write(client_fd, buffer, number_of_bytes_read);
         if (sent_bytes < 0)
         {
-            
+            printf("Error in sending file\n");
+            exit(0);
         }
         else
         {
@@ -230,7 +231,46 @@ int send_file(char file_path2[], int client_fd)
     }
     printf("sending done\n");
 }
+int count_number_of_paths_to_send(char dir_path2[])
+{
+    char dir_path[100];
+    strcpy(dir_path, dir_path2);
+    dir_path[strlen(dir_path)] = '\0';
+    int dir_or_file = 1;
+    char dir_name[100];
+    strcpy(dir_name, dir_path);
+    dir_name[strlen(dir_name)] = '\0';
+    DIR *dir = opendir(dir_path);
+    struct dirent *dir_entry;
+    dir_entry = readdir(dir);
+    int count=1;
+    while (dir_entry != NULL)
+    {
+        if (strcmp(dir_entry->d_name, ".") != 0 && strcmp(dir_entry->d_name, "..") != 0)
+        {
+            // check if it is a file or a directory
+            struct stat path_stat;
+            char path2[100];
+            strcpy(path2, dir_path);
+            strcat(path2, "/");
+            strcat(path2, dir_entry->d_name);
+            path2[strlen(path2)] = '\0';
+            printf("%s\n", path2);
+            stat(path2, &path_stat);
+            if (S_ISDIR(path_stat.st_mode))
+            {
+                count+=count_number_of_paths_to_send(path2);
+            }
+            else
+            {
+                count++;
+            }
+        }
+        dir_entry = readdir(dir);
+    }
+    return count;
 
+}
 int send_dir(char dir_path2[], int client_fd)
 {
     char dir_path[100];
@@ -245,33 +285,27 @@ int send_dir(char dir_path2[], int client_fd)
     DIR *dir = opendir(dir_path);
     struct dirent *dir_entry;
     dir_entry = readdir(dir);
-    while (dir)
+    while (dir_entry != NULL)
     {
         if (strcmp(dir_entry->d_name, ".") != 0 && strcmp(dir_entry->d_name, "..") != 0)
         {
-            // struct stat path_stat;
-
-            char path_new[100];
-            // check from the dirent struct about whether a file or a directory
-            for (int i = 0; i < strlen(dir_name); i++)
+            // check if it is a file or a directory
+            struct stat path_stat;
+            char path2[100];
+            strcpy(path2, dir_path);
+            strcat(path2, "/");
+            strcat(path2, dir_entry->d_name);
+            path2[strlen(path2)] = '\0';
+            printf("%s\n", path2);
+            stat(path2, &path_stat);
+            printf("%s\n", path2);
+            if (S_ISDIR(path_stat.st_mode))
             {
-                path_new[i] = dir_name[i];
-            }
-            path_new[strlen(dir_name)] = '/';
-            int curr_index = strlen(dir_name) + 1;
-            for (int i = 0; i < strlen(dir_entry->d_name); i++)
-            {
-                path_new[curr_index] = dir_entry->d_name[i];
-                curr_index++;
-            }
-            path_new[curr_index] = '\0';
-            if (dir_entry->d_type == DT_DIR)
-            {
-                send_dir(path_new, client_fd);
+                send_dir(path2, client_fd);
             }
             else
             {
-                send_file(path_new, client_fd);
+                send_file(path2, client_fd);
             }
         }
         dir_entry = readdir(dir);
@@ -310,71 +344,16 @@ int main()
         printf("Accepting failed\n");
         exit(0);
     }
-    send_dir("./command", client_fd);
-    // printf("Enter the relative path of hte file to send\n");
-    // char file_path[100];
-    // scanf("%s", file_path);
-    // struct stat file_stat;
-
-    // int file_status = stat(file_path, &file_stat);
-    // if (file_status < 0)
-    // {
-    //     printf("File does not exist\n");
-    //     exit(0);
-    // }
-
-    // if (!(file_stat.st_mode & S_IRUSR))
-    // {
-    //     printf("File does not have read permission\n");
-    //     exit(0);
-    // }
-    // int send_size = file_stat.st_size;
-
-    // char file_name[100];
-    // int i = strlen(file_path) - 1;
-    // while (i >= 0 && file_path[i] != '/')
-    // {
-    //     i--;
-    // }
-    // i++;
-    // int j = 0;
-    // while (i < strlen(file_path))
-    // {
-    //     file_name[j] = file_path[i];
-    //     i++;
-    //     j++;
-    // }
-    // file_name[j] = '\0';
-    // int dir_or_file = 0;
-    // write(client_fd, &dir_or_file, sizeof(dir_or_file));
-    // write(client_fd, file_name, sizeof(file_name));
-    // write(client_fd, &send_size, sizeof(send_size));
-    // int number_of_bytes_sent = 0;
-    // int number_of_bytes_to_send = send_size;
-    // int file_fd = open(file_path, O_RDONLY);
-    // char buffer[100];
-    // while (number_of_bytes_sent < send_size)
-    // {
-    //     int number_of_bytes_read = read(file_fd, buffer, sizeof(buffer));
-    //     if (number_of_bytes_read < 0)
-    //     {
-    //         printf("Error in reading file\n");
-    //         exit(0);
-    //     }
-    //     if (number_of_bytes_read == 0)
-    //     {
-    //         printf("File reading done\n");
-    //         break;
-    //     }
-    //     int sent_bytes = write(client_fd, buffer, number_of_bytes_read);
-    //     if (sent_bytes < 0)
-    //     {
-    //         printf("Error in sending file\n");
-    //         exit(0);
-    //     }
-    //     number_of_bytes_sent += sent_bytes;
-    // }
-    // printf("sending done\n");
+    char dir_to_send[100];
+    memset(dir_to_send, 0, sizeof(dir_to_send));
+    printf("Enter the path of the directory to send\n");
+    scanf("%s", dir_to_send);
+    dir_to_send[strlen(dir_to_send)] = '\0';
+    int ct=count_number_of_paths_to_send(dir_to_send);
+    write(client_fd,&ct,sizeof(ct));
+    send_dir(dir_to_send, client_fd);
+    printf("done\n");
+    
 
     return 0;
 }

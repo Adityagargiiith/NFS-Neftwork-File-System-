@@ -141,8 +141,8 @@ int rec_file(int server_fd)
     int number_of_bytes_to_recieve;
     read(server_fd, &number_of_bytes_to_recieve, sizeof(number_of_bytes_to_recieve));
     printf("Number of bytes to recieve is %d\n", number_of_bytes_to_recieve);
-    char buffer[100];
-    memset(buffer, 0, sizeof(buffer));
+    // char buffer[100];
+    // memset(buffer, 0, sizeof(buffer));
     int number_of_bytes_recieved = 0;
     while (1)
     {
@@ -150,14 +150,25 @@ int rec_file(int server_fd)
         {
             break;
         }
-        memset(buffer, 0, sizeof(buffer));
-        int number_of_bytes_recieved_now = read(server_fd, buffer, sizeof(buffer));
+        // memset(buffer, 0, sizeof(buffer));
+        int left=number_of_bytes_to_recieve-number_of_bytes_recieved;
+        int size_of_buffer;
+        if (left>100)
+        {
+            size_of_buffer=100;
+        }
+        else
+        {
+            size_of_buffer=left;
+        }
+        char new_buffer[size_of_buffer];
+        int number_of_bytes_recieved_now = read(server_fd, new_buffer, sizeof(new_buffer));
         if (number_of_bytes_recieved_now == 0)
         {
             /* code */
             break;
         }
-        write(file_fd, buffer, number_of_bytes_recieved_now);
+        write(file_fd, new_buffer, number_of_bytes_recieved_now);
         number_of_bytes_recieved += number_of_bytes_recieved_now;
     }
     return 0;
@@ -191,7 +202,57 @@ int main()
         exit(0);
     }
     printf("Connection done\n");
-    while (1)
+    int number_of_paths;
+    read(server_fd, &number_of_paths, sizeof(number_of_paths));
+    // while (1)
+    // {
+    //     int dir_or_file;
+    //     dir_or_file = 0;
+    //     read(server_fd, &dir_or_file, sizeof(dir_or_file));
+    //     if (dir_or_file == 0)
+    //     {
+    //         rec_file(server_fd);
+    //     }
+    //     else if (dir_or_file == 1)
+    //     {
+    //         rec_dir(server_fd);
+    //     }
+    //     read(server_fd, &dir_or_file, sizeof(dir_or_file));
+    //     if (dir_or_file == 0)
+    //     {
+    //         rec_file(server_fd);
+    //     }
+    //     else if (dir_or_file == 1)
+    //     {
+    //         rec_dir(server_fd);
+    //     }
+    //     // dir_or_file = 0;
+    //     memset(&dir_or_file, 0, sizeof(dir_or_file));
+    //     read(server_fd, &dir_or_file, sizeof(dir_or_file));
+    //     if (dir_or_file == 0)
+    //     {
+    //         printf("Last one is a file\n");
+    //         rec_file(server_fd);
+    //     }
+    //     else if (dir_or_file == 1)
+    //     {
+    //         printf("Here\n");
+    //         rec_dir(server_fd);
+    //     }
+    //     read(server_fd, &dir_or_file, sizeof(dir_or_file));
+    //     if (dir_or_file == 0)
+    //     {
+    //         printf("Last one is a file\n");
+    //         rec_file(server_fd);
+    //     }
+    //     else if (dir_or_file == 1)
+    //     {
+    //         printf("Here\n");
+    //         rec_dir(server_fd);
+    //     }
+    // }
+    printf("Number of paths is %d\n", number_of_paths);
+    for (int i = 0; i < number_of_paths; i++)
     {
         int dir_or_file;
         dir_or_file = 0;
@@ -200,11 +261,12 @@ int main()
         {
             rec_file(server_fd);
         }
-        else if (dir_or_file==1)
+        else if (dir_or_file == 1)
         {
             rec_dir(server_fd);
         }
     }
+    
 
     printf("File recieved\n");
     return 0;
