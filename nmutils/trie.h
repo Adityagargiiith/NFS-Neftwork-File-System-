@@ -27,6 +27,7 @@ struct ss_info
     int ss_port;
     int client_port;
     int s2s_port;
+    int dir_or_file;
 };
 
 typedef struct ss_info ss_info;

@@ -256,6 +256,7 @@ ss_info search_path_in_trie(char *path)
     ss_info ret_answer;
     ret_answer.ss_ip[0]='\0';
     ret_answer.ss_port = -1;
+    ret_answer.dir_or_file=-1;
     int ct_of_slash = 0;
     for (int i = 0; i < strlen(path); i++)
     {
@@ -329,6 +330,7 @@ ss_info search_path_in_trie(char *path)
                     ret_answer.ss_port = temp->ss_port;
                     ret_answer.s2s_port = temp->s2s_port;
                     ret_answer.client_port = temp->client_port;
+                    ret_answer.dir_or_file=temp->dir_or_file;
                     return ret_answer;
                 }
                 else
@@ -351,6 +353,7 @@ ss_info search_path_in_trie(char *path)
                 ret_answer.ss_port = temp->ss_port;
                 ret_answer.s2s_port = temp->s2s_port;
                 ret_answer.client_port = temp->client_port;
+                ret_answer.dir_or_file=temp->dir_or_file;
                 return ret_answer;
             }
             else
