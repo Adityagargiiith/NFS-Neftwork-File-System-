@@ -3,6 +3,8 @@
 
 // 1 for dir and 2 for file
 struct tree_node *root;
+ FILE* log_file;
+
 
 void *ss_init_thread(void *)
 {
@@ -78,6 +80,9 @@ void *client_req_handler(void *arg)
         exit(1);
     }
     char *token = strtok(msg, " ");
+     fprintf(log_file, "Received a request from client: %s\n", msg);
+fflush(log_file);  // Make sure the log message is immediately written to the file
+
     if (strcmp(token, "makedir") == 0)
     {
         char *name_of_dir = strtok(NULL, " ");
@@ -158,10 +163,12 @@ void *client_thread(void *)
 
 int main()
 {
+      log_file = fopen("naming_server.log", "a");
     pthread_t ss_init_thread_id;
     pthread_create(&ss_init_thread_id, NULL, ss_init_thread, NULL);
     pthread_t client_thread_id;
     pthread_create(&client_thread_id, NULL, client_thread, NULL);
     pthread_join(ss_init_thread_id, NULL);
+       fclose(log_file);
     return 0;
 }
