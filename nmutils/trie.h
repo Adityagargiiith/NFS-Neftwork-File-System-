@@ -23,7 +23,7 @@ typedef struct tree_node *root_ptr;
 
 struct ss_info
 {
-    char *ss_ip;
+    char ss_ip[50];
     int ss_port;
     int client_port;
     int s2s_port;

@@ -252,7 +252,7 @@ void init_root()
 ss_info search_path_in_trie(char *path)
 {
     ss_info ret_answer;
-    ret_answer.ss_ip = NULL;
+    ret_answer.ss_ip[0]='\0';
     ret_answer.ss_port = -1;
     int ct_of_slash = 0;
     for (int i = 0; i < strlen(path); i++)
@@ -321,8 +321,9 @@ ss_info search_path_in_trie(char *path)
                 if (temp->access_permissiom)
                 {
                     // return 1;
-                    ret_answer.ss_ip = (char *)malloc(sizeof(char) * (strlen(temp->ss_ip) + 1));
+                    // ret_answer.ss_ip = (char *)malloc(sizeof(char) * (strlen(temp->ss_ip) + 1));
                     strcpy(ret_answer.ss_ip, temp->ss_ip);
+                    ret_answer.ss_ip[strlen(temp->ss_ip)] = '\0';
                     ret_answer.ss_port = temp->ss_port;
                     ret_answer.s2s_port = temp->s2s_port;
                     ret_answer.client_port = temp->client_port;
@@ -342,8 +343,9 @@ ss_info search_path_in_trie(char *path)
             if (temp->access_permissiom)
             {
                 // return 1;
-                ret_answer.ss_ip = (char *)malloc(sizeof(char) * (strlen(temp->ss_ip) + 1));
+                // ret_answer.ss_ip = (char *)malloc(sizeof(char) * (strlen(temp->ss_ip) + 1));
                 strcpy(ret_answer.ss_ip, temp->ss_ip);
+                ret_answer.ss_ip[strlen(temp->ss_ip)] = '\0';
                 ret_answer.ss_port = temp->ss_port;
                 ret_answer.s2s_port = temp->s2s_port;
                 ret_answer.client_port = temp->client_port;
