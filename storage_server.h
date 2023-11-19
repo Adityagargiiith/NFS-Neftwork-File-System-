@@ -43,6 +43,7 @@ struct data_of_ss
     int s2s_port;
     int client_port;
     struct details_of_path paths[MAX_PATHS];
+    char ip[20];
 };
 
 #endif
