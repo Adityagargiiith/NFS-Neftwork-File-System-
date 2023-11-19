@@ -21,11 +21,13 @@
 #include "nmutils/trie.h"
 #include "nmutils/copyfile.h"
 #include "nmutils/copydir.h"
+#include "nmutils/read.h"
+#include "nmutils/write.h"
 
 #define CLIENT_PORT 51234
 #define SS_PORT 5572
 
 
-#define IP "0.0.0.0"
+#define IP "127.0.0.1"
 
 #endif

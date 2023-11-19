@@ -31,6 +31,8 @@ int get_random_port_number()
 
 int nm_conn_port;
 int s2s_conn_port;
+int client_conn_port;
+
 void *naming_server_init(void *)
 {
     int sock;
@@ -62,6 +64,7 @@ void *naming_server_init(void *)
     initial_data_of_ss.s2s_port = get_random_port_number();
     s2s_conn_port = initial_data_of_ss.s2s_port;
     nm_conn_port = initial_data_of_ss.port_number;
+    client_conn_port=initial_data_of_ss.client_port;
     printf("Enter number of paths: ");
     scanf("%d", &initial_data_of_ss.number_of_paths);
     initial_data_of_ss.paths[initial_data_of_ss.number_of_paths];
@@ -274,8 +277,32 @@ void *naming_server_communication(void *)
     }
 }
 
-void *client_thread(void *)
+void *client_req_handler(void *arg)
 {
+    pthread_detach(pthread_self());
+    int client_socket = *((int *)arg);
+    char *msg = (char *)malloc(sizeof(char) * 100);
+    memset(msg, 0, 100);
+    if (recv(client_socket, msg, 100, 0) < 0)
+    {
+        perror("Error in recv() function call: ");
+        exit(1);
+    }
+    char *token = strtok(msg, " ");
+    if (strcmp(token, "read") == 0)
+    {
+        char *path = strtok(NULL, " ");
+        readss(path, client_socket);
+    }
+    else if (strcmp(token, "write") == 0)
+    {
+        /* code */
+        char *path = strtok(NULL, " ");
+        char *data = strtok(NULL, "\"");
+        writess(path, data, client_socket);
+    }
+
+    close(client_socket);
     return NULL;
 }
 
@@ -289,10 +316,49 @@ int main()
     pthread_t thread_id2;
     pthread_create(&thread_id2, NULL, naming_server_communication, NULL);
 
-    pthread_t thread_id3;
-    pthread_create(&thread_id3, NULL, client_thread, NULL);
+    int socket_client = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_client == -1)
+    {
+        perror("Error in socket() function call: ");
+        exit(1);
+    }
+
+    struct sockaddr_in server_address_client;
+
+    memset(&server_address_client, 0, sizeof(server_address_client));
+    server_address_client.sin_family = AF_INET;
+    server_address_client.sin_port = htons(client_conn_port);
+    server_address_client.sin_addr.s_addr = inet_addr(SS_IP);
+
+    if (bind(socket_client, (struct sockaddr *)&server_address_client, sizeof(server_address_client)) == -1)
+    {
+        perror("Error in bind() function call: ");
+        exit(1);
+    }
+
+    if (listen(socket_client, 10) == -1)
+    {
+        perror("Error in listen() function call: ");
+        exit(1);
+    }
+
+    while (1)
+    {
+        int client_socket_client;
+        struct sockaddr_in client_address_client;
+        int client_address_length_client = sizeof(client_address_client);
+        client_socket_client = accept(socket_client, (struct sockaddr *)&client_address_client, &client_address_length_client);
+        if (client_socket_client == -1)
+        {
+            perror("Error in accept() function call: ");
+            exit(1);
+        }
+
+        printf("Connection accepted\n");
+        pthread_t thread_id;
+        pthread_create(&thread_id, NULL, client_req_handler, &client_socket_client);
+    }
 
     pthread_join(thread_id2, NULL);
-    pthread_join(thread_id3, NULL);
     return 0;
 }

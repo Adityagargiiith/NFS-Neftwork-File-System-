@@ -116,6 +116,21 @@ void *client_req_handler(void *arg)
         char *dest = strtok(NULL, " ");
         copydirnm(src, dest, client_socket);
     }
+    else if (strcmp(token, "read") == 0)
+    {
+        /* code */
+        // printf("Here for read\n");
+        char *filename = strtok(NULL, " ");
+        printf("Filename is %s\n", filename);
+        readnm(filename, client_socket);
+    }
+    else if (strcmp(token, "write") == 0)
+    {
+        /* code */
+        char *filename = strtok(NULL, " ");
+        printf("Filename is %s\n", filename);
+        writenm(filename, client_socket);
+    }
 
     close(client_socket);
     return NULL;

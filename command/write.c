@@ -11,17 +11,26 @@ void write_file(char *input)
     char *filename = strtok(NULL, " ");
     if (filename == NULL)
     {
-        printf("Usage: write <filename(with path)> \n");
+        printf("Usage: write <filename(with path)> data\n");
         return;
     }
-
-    char *token = strtok(NULL, " ");
-    if (token != NULL)
+    // printf("%s\n",cpy_command);
+    char *data = strtok(NULL, "\n");
+    if (data == NULL)
     {
-        printf("Usage: write <filename(with path)> \n");
+        printf("Usage: write <filename(with path)> data\n");
         return;
     }
-
+    // printf("%s\n",data);
+    // return;
+    // char *token = strtok(NULL, "\"");
+    // if (token == NULL)
+    // {
+    //     printf("Usage: write <filename(with path)> data\n");
+    //     return;
+    // }
+    // printf("%s\n",token);
+    // return;
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (sockfd < 0)
@@ -75,6 +84,10 @@ void write_file(char *input)
             return;
         }
 
+        close(sockfd);
+        // printf("Storage server ip: %s\n", ss->ss_ip);
+        // printf("Storage server port: %d\n", ss->ss_port);
+
         int ss_sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
         if (ss_sockfd < 0)
@@ -89,27 +102,57 @@ void write_file(char *input)
         serv_addr.sin_port = htons(ss->client_port);
         serv_addr.sin_addr.s_addr = inet_addr(ss->ss_ip);
 
-        int ss_ret = connect(ss_sockfd, (struct sockaddr *)&ss_serv_addr, sizeof(ss_serv_addr));
+        // printf("port %d\n", ss->client_port);
+        // printf("ip %s\n",ss->ss_ip);
 
-        if (ss_ret < 0)
+        int ret = connect(ss_sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+
+        if (ret < 0)
         {
             printf("Error in connecting to storage server\n");
             return;
         }
 
+        // printf("Yaha tak aa gaye\n");
         char *msg2 = (char *)malloc(sizeof(char) * 100);
+        memset(msg2, 0, 100);
         strcpy(msg2, "write ");
         strcat(msg2, filename);
+        strcat(msg2, " ");
+        strcat(msg2, data);
 
-        int len2 = strlen(msg2);
-        msg2[len2] = '\0';
-
+        msg2[strlen(msg2)] = '\0';
+        // printf("%s\n",msg2);
+        // printf("Yaha tak bhi aa gaye\n");
         if (send(ss_sockfd, msg2, strlen(msg2), 0) < 0)
         {
             printf("Error in sending data to storage server\n");
             return;
         }
-
+        // printf("here15\n");
+        int write_status;
+        if (recv(ss_sockfd, &write_status, sizeof(write_status), 0) < 0)
+        {
+            printf("Error in receiving data from storage server\n");
+            return;
+        }
+        // printf("here16\n");
+        if (write_status == SUCCESS)
+        {
+            printf("File written successfully\n");
+            return;
+        }
+        else if (write_status == FILE_NOT_FOUND)
+        {
+            printf("File not found\n");
+            return;
+        }
+        else
+        {
+            printf("Error in writing file\n");
+            return;
+        }
+        printf("here17\n");
     }
     else if (status == FILE_NOT_FOUND)
     {

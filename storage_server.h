@@ -21,6 +21,8 @@
 #include "nmutils/trie.h"
 #include "ssutils/copyfile.h"
 #include "ssutils/copydir.h"
+#include "ssutils/read.h"
+#include "ssutils/write.h"
 
 #define MAX_PATHS 1000
 #define NM_INIT_PORT 5572

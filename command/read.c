@@ -88,7 +88,7 @@ void read_file(char *input)
         serv_addr2.sin_family = AF_INET;
         serv_addr2.sin_port = htons(ss->client_port);
         serv_addr2.sin_addr.s_addr = inet_addr(ss->ss_ip);
-
+        printf("port %d\n", ss->ss_port);
         int ret2 = connect(sockfd2, (struct sockaddr *)&serv_addr2, sizeof(serv_addr2));
         if (ret2 < 0)
         {
@@ -108,9 +108,39 @@ void read_file(char *input)
             printf("Error in sending data to storage server\n");
             return;
         }
-
-        
-
+        int number_of_bytes_to_read;
+        if (recv(sockfd2, &number_of_bytes_to_read, sizeof(int), 0) < 0)
+        {
+            printf("Error in receiving data from storage server\n");
+            return;
+        }
+        if (number_of_bytes_to_read == -2)
+        {
+            printf("Read permission denied\n");
+        }
+        else
+        {
+            int number_of_bytes_recieved = 0;
+            while (number_of_bytes_recieved < number_of_bytes_to_read)
+            {
+                int left = number_of_bytes_to_read - number_of_bytes_recieved;
+                if (left > 100)
+                {
+                    left = 100;
+                }
+                char *buffer = (char *)malloc(sizeof(char) * left);
+                memset(buffer, 0, sizeof(buffer));
+                int number_of_bytes_recieved_now = recv(sockfd2, buffer, sizeof(buffer), 0);
+                if (number_of_bytes_recieved_now == 0)
+                {
+                    break;
+                }
+                number_of_bytes_recieved += number_of_bytes_recieved_now;
+                printf("%s", buffer);
+            }
+            printf("\n");
+            printf("End of file\n");
+        }
     }
     else if (status == FILE_NOT_FOUND)
     {
