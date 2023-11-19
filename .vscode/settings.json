@@ -9,6 +9,9 @@
         "read.h": "c",
         "naming_server.h": "c",
         "errno.h": "c",
-        "trie.h": "c"
+        "trie.h": "c",
+        "backup.h": "c",
+        "copyfile.h": "c",
+        "copydir.h": "c"
     }
 }

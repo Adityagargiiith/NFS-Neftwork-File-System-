@@ -94,7 +94,7 @@ void copydirreceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
         chdir(original);
         return;
     }
-
+    printf("Connected\n");
     int number_of_paths;
     read(server_fd, &number_of_paths, sizeof(number_of_paths));
     while (number_of_paths--)
@@ -361,7 +361,7 @@ void copydirss(char *src, ss_info *ss_to_send, int client_socket_nm, int s2s_con
         close(sock_ss);
         return;
     }
-
+    
     char temp2[100];
     memset(temp2, 0, sizeof(temp2));
     strcpy(temp2, ".");

@@ -7,7 +7,7 @@ FILE *log_file;
 
 int failure[100000];
 struct data_of_ss initial_data[100];
-int backup_pending[100000];
+int backup_pending[1000];
 int curr_number_of_ss;
 struct replica_info
 {
@@ -25,204 +25,79 @@ struct replica_info
 
 struct replica_info backup_arr[100];
 
-void *ss_backup_update(void *arg)
+pthread_mutex_t mutex;
+
+void *ss_backup_update(void *)
 {
     printf("Here\n");
     pthread_detach(pthread_self());
-    int ss_number = *((int *)arg);
+    // int ss_number = *((int *)arg);
     while (1)
     {
-        if (backup_pending[ss_number] == 1)
+        for (int ss_number = 0; ss_number < 100; ss_number++)
         {
-            // printf("Here\n");
-            if (backup_arr[ss_number].replica1_ss_index == -1)
+            if (backup_pending[ss_number] == 1)
             {
-                continue;
-            }
-            for (int i = 0; i < initial_data[ss_number].number_of_paths; i++)
-            {
-                if (initial_data[ss_number].paths[i].dir_or_file == 1)
+                // pthread_mutex_lock(&mutex);
+                printf("Reached by %d\n", ss_number);
+                usleep(5000000);
+                for (int i = 0; i < initial_data[ss_number].number_of_paths; i++)
                 {
-                    printf("Here1\n");
-                    int sock_ss_backup = socket(AF_INET, SOCK_STREAM, 0);
-                    if (sock_ss_backup == -1)
+                    if (backup_arr[ss_number].replica1_ss_index != -1)
                     {
-                        perror("Error in socket() function call: ");
-                        return NULL;
+                        ss_new sender, receiver;
+                        sender.ss_port = initial_data[ss_number].port_number;
+                        sender.s2s_port = initial_data[ss_number].s2s_port;
+                        sender.dir_or_file = 1;
+                        strcpy(sender.ss_ip, initial_data[ss_number].ip);
+                        sender.ss_ip[strlen(sender.ss_ip)] = '\0';
+                        int index1 = backup_arr[ss_number].replica1_ss_index;
+                        receiver.ss_port = initial_data[index1].port_number;
+                        receiver.s2s_port = initial_data[index1].s2s_port;
+                        receiver.dir_or_file = 1;
+                        strcpy(receiver.ss_ip, initial_data[index1].ip);
+                        receiver.ss_ip[strlen(receiver.ss_ip)] = '\0';
+                        if (initial_data[ss_number].paths[i].dir_or_file == 1)
+                        {
+                            backupdir(sender, receiver, initial_data[ss_number].paths[i].path);
+                            /* code */
+                        }
+                        else if (initial_data[ss_number].paths[i].dir_or_file == 0)
+                        {
+                            /* code */
+                            backup_file(sender, receiver, initial_data[ss_number].paths[i].path);
+                        }
+                        backup_pending[ss_number] = 0;
                     }
-                    struct sockaddr_in server_address_ss_backup;
-                    memset(&server_address_ss_backup, 0, sizeof(server_address_ss_backup));
-                    server_address_ss_backup.sin_family = AF_INET;
-                    server_address_ss_backup.sin_port = htons(initial_data[ss_number].port_number);
-                    server_address_ss_backup.sin_addr.s_addr = inet_addr(initial_data[ss_number].ip);
-                    int connect_success = connect(sock_ss_backup, (struct sockaddr *)&server_address_ss_backup, sizeof(server_address_ss_backup));
-                    if (connect_success == -1)
+                    if (backup_arr[ss_number].replica2_ss_index != -1)
                     {
-                        perror("Error in connect() function call: ");
-                        return NULL;
+                        ss_new sender, receiver;
+                        sender.ss_port = initial_data[ss_number].port_number;
+                        sender.s2s_port = initial_data[ss_number].s2s_port;
+                        sender.dir_or_file = 1;
+                        strcpy(sender.ss_ip, initial_data[ss_number].ip);
+                        sender.ss_ip[strlen(sender.ss_ip)] = '\0';
+                        int index1 = backup_arr[ss_number].replica2_ss_index;
+                        receiver.ss_port = initial_data[index1].port_number;
+                        receiver.s2s_port = initial_data[index1].s2s_port;
+                        receiver.dir_or_file = 1;
+                        strcpy(receiver.ss_ip, initial_data[index1].ip);
+                        receiver.ss_ip[strlen(receiver.ss_ip)] = '\0';
+                        if (initial_data[ss_number].paths[i].dir_or_file == 1)
+                        {
+                            backupdir(sender, receiver, initial_data[ss_number].paths[i].path);
+                            /* code */
+                        }
+                        else if (initial_data[ss_number].paths[i].dir_or_file == 0)
+                        {
+                            /* code */
+                            backup_file(sender, receiver, initial_data[ss_number].paths[i].path);
+                        }
+                        backup_pending[ss_number] = 0;
                     }
-                    char *msg = (char *)malloc(sizeof(char) * 100);
-                    memset(msg, 0, 100);
-                    strcpy(msg, "copydir src ");
-                    strcat(msg, initial_data[ss_number].paths[i].path);
-
-                    msg[strlen(msg)] = '\0';
-                    if (send(sock_ss_backup, msg, strlen(msg), 0) == -1)
-                    {
-                        perror("Error in send() function call: ");
-                        return NULL;
-                    }
-                    usleep(1000);
-                    ss_info to_send;
-                    to_send.s2s_port = initial_data[backup_arr[ss_number].replica1_ss_index].s2s_port;
-                    strcpy(to_send.ss_ip, initial_data[backup_arr[ss_number].replica1_ss_index].ip);
-                    if (send(sock_ss_backup, &to_send, sizeof(to_send), 0) == -1)
-                    {
-                        perror("Error in send() function call: ");
-                        return NULL;
-                    }
-                    int sock_ss_backup1 = socket(AF_INET, SOCK_STREAM, 0);
-                    if (sock_ss_backup1 == -1)
-                    {
-                        perror("Error in socket() function call: ");
-                        return NULL;
-                    }
-                    struct sockaddr_in server_address_ss_backup1;
-                    memset(&server_address_ss_backup1, 0, sizeof(server_address_ss_backup1));
-                    server_address_ss_backup1.sin_family = AF_INET;
-                    server_address_ss_backup1.sin_port = htons(initial_data[backup_arr[ss_number].replica1_ss_index].port_number);
-                    server_address_ss_backup1.sin_addr.s_addr = inet_addr(initial_data[backup_arr[ss_number].replica1_ss_index].ip);
-                    int connect_success1 = connect(sock_ss_backup1, (struct sockaddr *)&server_address_ss_backup1, sizeof(server_address_ss_backup1));
-                    if (connect_success1 == -1)
-                    {
-                        perror("Error in connect() function call: ");
-                        return NULL;
-                    }
-                    char *msg1 = (char *)malloc(sizeof(char) * 100);
-                    memset(msg1, 0, 100);
-                    strcpy(msg1, "copydir dest ");
-                    strcat(msg1, "/");
-                    msg1[strlen(msg1)] = '\0';
-                    if (send(sock_ss_backup1, msg1, strlen(msg1), 0) == -1)
-                    {
-                        perror("Error in send() function call: ");
-                        return NULL;
-                    }
-                    usleep(1000);
-                    ss_info to_send1;
-                    to_send1.s2s_port = initial_data[ss_number].s2s_port;
-                    strcpy(to_send1.ss_ip, initial_data[ss_number].ip);
-                    if (send(sock_ss_backup1, &to_send1, sizeof(to_send1), 0) == -1)
-                    {
-                        perror("Error in send() function call: ");
-                        return NULL;
-                    }
-                    int status;
-                    if (recv(sock_ss_backup, &status, sizeof(status), 0) == -1)
-                    {
-                        perror("Error in recv() function call: ");
-                        return NULL;
-                    }
-                    int status1;
-                    if (recv(sock_ss_backup1, &status1, sizeof(status1), 0) == -1)
-                    {
-                        perror("Error in recv() function call: ");
-                        return NULL;
-                    }
-                    close(sock_ss_backup);
-                    close(sock_ss_backup1);
-                    if (backup_arr[ss_number].replica2_ss_index == -1)
-                    {
-                        continue;
-                    }
-                    int sock_ss_backup2 = socket(AF_INET, SOCK_STREAM, 0);
-                    if (sock_ss_backup2 == -1)
-                    {
-                        perror("Error in socket() function call: ");
-                        return NULL;
-                    }
-                    struct sockaddr_in server_address_ss_backup2;
-                    memset(&server_address_ss_backup2, 0, sizeof(server_address_ss_backup2));
-                    server_address_ss_backup2.sin_family = AF_INET;
-                    server_address_ss_backup2.sin_port = htons(initial_data[ss_number].port_number);
-                    server_address_ss_backup2.sin_addr.s_addr = inet_addr(initial_data[ss_number].ip);
-                    int connect_success2 = connect(sock_ss_backup2, (struct sockaddr *)&server_address_ss_backup2, sizeof(server_address_ss_backup2));
-                    if (connect_success2 == -1)
-                    {
-                        perror("Error in connect() function call: ");
-                        return NULL;
-                    }
-                    char *msg2 = (char *)malloc(sizeof(char) * 100);
-                    memset(msg2, 0, 100);
-                    strcpy(msg2, "copydir src ");
-                    strcat(msg2, initial_data[ss_number].paths[i].path);
-
-                    msg2[strlen(msg2)] = '\0';
-                    if (send(sock_ss_backup2, msg2, strlen(msg2), 0) == -1)
-                    {
-                        perror("Error in send() function call: ");
-                        return NULL;
-                    }
-                    usleep(1000);
-                    ss_info to_send2;
-                    to_send2.s2s_port = initial_data[backup_arr[ss_number].replica2_ss_index].s2s_port;
-                    strcpy(to_send2.ss_ip, initial_data[backup_arr[ss_number].replica2_ss_index].ip);
-                    if (send(sock_ss_backup2, &to_send2, sizeof(to_send2), 0) == -1)
-                    {
-                        perror("Error in send() function call: ");
-                        return NULL;
-                    }
-                    int sock_ss_backup3 = socket(AF_INET, SOCK_STREAM, 0);
-                    if (sock_ss_backup3 == -1)
-                    {
-                        perror("Error in socket() function call: ");
-                        return NULL;
-                    }
-                    struct sockaddr_in server_address_ss_backup3;
-                    memset(&server_address_ss_backup3, 0, sizeof(server_address_ss_backup3));
-                    server_address_ss_backup3.sin_family = AF_INET;
-                    server_address_ss_backup3.sin_port = htons(initial_data[backup_arr[ss_number].replica2_ss_index].port_number);
-                    server_address_ss_backup3.sin_addr.s_addr = inet_addr(initial_data[backup_arr[ss_number].replica2_ss_index].ip);
-                    int connect_success3 = connect(sock_ss_backup3, (struct sockaddr *)&server_address_ss_backup3, sizeof(server_address_ss_backup3));
-                    if (connect_success3 == -1)
-                    {
-                        perror("Error in connect() function call: ");
-                        return NULL;
-                    }
-                    char *msg3 = (char *)malloc(sizeof(char) * 100);
-                    memset(msg3, 0, 100);
-                    strcpy(msg3, "copydir dest ");
-                    strcat(msg3, "/");
-                    msg3[strlen(msg3)] = '\0';
-                    if (send(sock_ss_backup3, msg3, strlen(msg3), 0) == -1)
-                    {
-                        perror("Error in send() function call: ");
-                        return NULL;
-                    }
-                    usleep(1000);
-                    ss_info to_send3;
-                    to_send3.s2s_port = initial_data[ss_number].s2s_port;
-                    strcpy(to_send3.ss_ip, initial_data[ss_number].ip);
-                    if (send(sock_ss_backup3, &to_send3, sizeof(to_send3), 0) == -1)
-                    {
-                        perror("Error in send() function call: ");
-                        return NULL;
-                    }
-                    int status2;
-                    if (recv(sock_ss_backup2, &status2, sizeof(status2), 0) == -1)
-                    {
-                        perror("Error in recv() function call: ");
-                        return NULL;
-                    }
-                    int status3;
-                    if (recv(sock_ss_backup3, &status3, sizeof(status3), 0) == -1)
-                    {
-                        perror("Error in recv() function call: ");
-                        return NULL;
-                    }
-                    close(sock_ss_backup2);
-                    close(sock_ss_backup3);
                 }
+                printf("Unlocked\n");
+                // pthread_mutex_unlock(&mutex);
             }
         }
     }
@@ -298,10 +173,11 @@ void *ss_init_thread(void *)
         backup_arr[curr_number_of_ss].original_ss_port = initial_data_of_ss.port_number;
         if (curr_number_of_ss == 0)
         {
-            curr_number_of_ss++;
-            pthread_t ss_backup_update_thread_id;
+            // pthread_t ss_backup_update_thread_id;
             int arg1 = curr_number_of_ss;
-            pthread_create(&ss_backup_update_thread_id, NULL, ss_backup_update, (void *)(&arg1));
+            backup_pending[curr_number_of_ss] = 1;
+            // pthread_create(&ss_backup_update_thread_id, NULL, ss_backup_update, (void *)(&arg1));
+            curr_number_of_ss++;
             continue;
         }
         else if (curr_number_of_ss == 1)
@@ -314,10 +190,10 @@ void *ss_init_thread(void *)
             backup_arr[curr_number_of_ss].replica1_ss_port = backup_arr[0].original_ss_port;
             backup_arr[curr_number_of_ss].number_of_references = 1;
             backup_arr[0].number_of_references++;
-            pthread_t ss_backup_update_thread_id;
-            int arg1 = curr_number_of_ss;
-            pthread_create(&ss_backup_update_thread_id, NULL, ss_backup_update, (void *)(&arg1));
-            curr_number_of_ss++;
+            // pthread_t ss_backup_update_thread_id;
+            // int arg1 = curr_number_of_ss;
+            // pthread_create(&ss_backup_update_thread_id, NULL, ss_backup_update, (void *)(&arg1));
+            // curr_number_of_ss++;
         }
         else if (curr_number_of_ss == 2)
         {
@@ -337,10 +213,10 @@ void *ss_init_thread(void *)
             backup_arr[curr_number_of_ss].replica1_ss_port = backup_arr[1].original_ss_port;
             backup_arr[curr_number_of_ss].number_of_references++;
             backup_arr[1].number_of_references++;
-            pthread_t ss_backup_update_thread_id;
-            int arg1 = curr_number_of_ss;
-            pthread_create(&ss_backup_update_thread_id, NULL, ss_backup_update, (void *)(&arg1));
-            curr_number_of_ss++;
+            // pthread_t ss_backup_update_thread_id;
+            // int arg1 = curr_number_of_ss;
+            // pthread_create(&ss_backup_update_thread_id, NULL, ss_backup_update, (void *)(&arg1));
+            // curr_number_of_ss++;
         }
         else
         {
@@ -376,11 +252,18 @@ void *ss_init_thread(void *)
             strcpy(backup_arr[curr_number_of_ss].replica2_ss_ip, backup_arr[min2_index].original_ss_ip);
             backup_arr[curr_number_of_ss].replica2_ss_port = backup_arr[min2_index].original_ss_port;
             backup_arr[min2_index].number_of_references++;
-            pthread_t ss_backup_update_thread_id;
-            int arg1 = curr_number_of_ss;
-            pthread_create(&ss_backup_update_thread_id, NULL, ss_backup_update, (void *)(&arg1));
-            curr_number_of_ss++;
         }
+        backup_pending[curr_number_of_ss] = 1;
+        // pthread_t ss_backup_update_thread_id;
+        if (curr_number_of_ss==2)
+        {
+            backup_pending[0]=1;
+            backup_pending[1]=1;
+        }
+        
+        int arg1 = curr_number_of_ss;
+        // pthread_create(&ss_backup_update_thread_id, NULL, ss_backup_update, (void *)(&arg1));
+        curr_number_of_ss++;
     }
 }
 
@@ -500,12 +383,13 @@ void *client_thread(void *)
 
 int main()
 {
+    pthread_mutex_init(&mutex, NULL);
     curr_number_of_ss = 0;
     memset(failure, 0, sizeof(failure));
     // memset(backup_arr, 0, sizeof(backup_arr));
     for (int i = 0; i < 100; i++)
     {
-        backup_pending[i] = 1;
+        backup_pending[i] = 0;
         backup_arr[i].original_ss_index = -1;
         backup_arr[i].replica1_ss_index = -1;
         backup_arr[i].replica2_ss_index = -1;
@@ -517,6 +401,8 @@ int main()
     pthread_create(&ss_init_thread_id, NULL, ss_init_thread, NULL);
     pthread_t client_thread_id;
     pthread_create(&client_thread_id, NULL, client_thread, NULL);
+    pthread_t ss_backup_update_thread_id;
+    pthread_create(&ss_backup_update_thread_id, NULL, ss_backup_update, NULL);
     pthread_join(client_thread_id, NULL);
     pthread_join(ss_init_thread_id, NULL);
     fclose(log_file);

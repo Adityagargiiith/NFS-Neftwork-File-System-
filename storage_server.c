@@ -250,7 +250,7 @@ void *naming_server_communication(void *)
                     perror("Error in recv() function call: ");
                     exit(1);
                 }
-
+                // printf("Received\n");
                 copydirreceive(dest, ss_to_receive, client_socket_nm);
             }
             else if (strcmp(temp, "src") == 0)
@@ -264,7 +264,7 @@ void *naming_server_communication(void *)
                     perror("Error in recv() function call: ");
                     exit(1);
                 }
-
+                // printf("Received\n");
                 copydirss(src, ss_to_send, client_socket_nm, s2s_conn_port);
             }
             else if (strcmp(temp, "same") == 0)

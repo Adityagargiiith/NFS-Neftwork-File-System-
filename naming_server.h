@@ -23,6 +23,7 @@
 #include "nmutils/copydir.h"
 #include "nmutils/read.h"
 #include "nmutils/write.h"
+#include "nmutils/backup.h"
 
 #define CLIENT_PORT 51234
 #define SS_PORT 5572
