@@ -7,7 +7,7 @@ void rec_file(int server_fd)
     read(server_fd, file_name, sizeof(file_name));
     // int file_fd = open(file_name, O_RDONLY);
     // create
-    int file_fd = open(file_name, O_RDONLY | O_WRONLY | O_CREAT, 0666);
+    int file_fd = open(file_name, O_RDONLY | O_WRONLY | O_CREAT | O_TRUNC, 0666);
     if (file_fd == -1)
     {
         perror("Error in open() function call: ");
@@ -78,18 +78,21 @@ void copydirreceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
     if (server_fd == -1)
     {
         perror("Error in socket() function call: ");
-        exit(1);
+        chdir(original);
+        return;
     }
     struct sockaddr_in server_address;
     memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(ss_to_receive->s2s_port);
     server_address.sin_addr.s_addr = inet_addr(ss_to_receive->ss_ip);
+    usleep(100000);
     int connect_success = connect(server_fd, (struct sockaddr *)&server_address, sizeof(server_address));
     if (connect_success == -1)
     {
         perror("Error in connect() function call: ");
-        exit(1);
+        chdir(original);
+        return;
     }
 
     int number_of_paths;
@@ -108,12 +111,12 @@ void copydirreceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
             rec_dir(server_fd);
         }
     }
-    close(server_fd);
 
     int status1 = SUCCESS;
     if (send(client_socket_nm, &status1, sizeof(status1), 0) == -1)
     {
         perror("Error in send() function call: ");
+        chdir(original);
         return;
     }
 
@@ -123,7 +126,7 @@ void copydirreceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
         perror("Error in chdir() function call: ");
         return;
     }
-
+    close(server_fd);
     return;
 }
 
@@ -315,16 +318,28 @@ void copydirss(char *src, ss_info *ss_to_send, int client_socket_nm, int s2s_con
         perror("Error in socket() function call: ");
         return;
     }
+
+    //use SO_REUSEADDR
+    int opt = 1;
+    if (setsockopt(sock_ss, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
+    {
+        perror("Error in setsockopt() function call: ");
+        return;
+    }
+
+
     struct sockaddr_in server_address_ss;
     memset(&server_address_ss, 0, sizeof(server_address_ss));
     server_address_ss.sin_family = AF_INET;
     server_address_ss.sin_port = htons(s2s_conn_port);
     server_address_ss.sin_addr.s_addr = inet_addr(SS_IP);
 
+    usleep(10000);
     int bind_success = bind(sock_ss, (struct sockaddr *)&server_address_ss, sizeof(server_address_ss));
     if (bind_success == -1)
     {
         perror("Error in bind() function call: ");
+        close(sock_ss);
         return;
     }
 
@@ -332,6 +347,7 @@ void copydirss(char *src, ss_info *ss_to_send, int client_socket_nm, int s2s_con
     if (listen_success == -1)
     {
         perror("Error in listen() function call: ");
+        close(sock_ss);
         return;
     }
 
@@ -342,10 +358,9 @@ void copydirss(char *src, ss_info *ss_to_send, int client_socket_nm, int s2s_con
     if (client_socket_ss < 0)
     {
         perror("Error in accept() function call: ");
+        close(sock_ss);
         return;
     }
-
-    printf("Second storage server connected\n");
 
     char temp2[100];
     memset(temp2, 0, sizeof(temp2));
@@ -374,8 +389,8 @@ void copydirss(char *src, ss_info *ss_to_send, int client_socket_nm, int s2s_con
     write(client_socket_ss, &ct, sizeof(ct));
     send_dir(dir_name, client_socket_ss, temp2);
 
-    close(client_socket_ss);
     close(sock_ss);
+    close(client_socket_ss);
 
     int status = SUCCESS;
     if (send(client_socket_nm, &status, sizeof(status), 0) == -1)
@@ -386,7 +401,7 @@ void copydirss(char *src, ss_info *ss_to_send, int client_socket_nm, int s2s_con
     return;
 }
 
-void copysamefcn(char *src,char *dest)
+void copysamefcn(char *src, char *dest)
 {
     DIR *dir = opendir(src);
     if (dir == NULL)
@@ -524,5 +539,4 @@ void copydirss_same(char *src, char *dest, int client_socket_nm, int s2s_conn_po
     }
 
     return;
-
 }

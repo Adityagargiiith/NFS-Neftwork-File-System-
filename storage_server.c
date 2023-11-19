@@ -157,8 +157,6 @@ void *naming_server_communication(void *)
 
     while (1)
     {
-        printf("Waiting for connection\n");
-        printf("Port number: %d\n", nm_conn_port);
         int client_socket_nm;
         struct sockaddr_in client_address_nm;
         int client_address_length_nm = sizeof(client_address_nm);

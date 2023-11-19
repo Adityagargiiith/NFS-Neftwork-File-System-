@@ -200,6 +200,9 @@ void copydirnm(char *src, char *dest, int client_socket)
         return;
     }
 
+    close(sock_ss);
+    close(sock_ss1);
+    
     if (status == SUCCESS && status1 == SUCCESS)
     {
         int status = SUCCESS;

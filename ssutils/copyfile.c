@@ -44,7 +44,7 @@ void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
     read(server_fd, file_name, sizeof(file_name));
     printf("File name recieved is %s\n", file_name);
 
-    int file_fd = open(file_name, O_RDONLY | O_WRONLY | O_CREAT, 0666);
+    int file_fd = open(file_name, O_RDONLY | O_WRONLY | O_CREAT | O_TRUNC, 0666);
     int number_of_bytes_to_recieve;
     read(server_fd, &number_of_bytes_to_recieve, sizeof(number_of_bytes_to_recieve));
 
@@ -95,6 +95,16 @@ void copyfiless(char *src, ss_info *ss_to_send, int client_socket_nm,int s2s_por
         printf("Socket creation failed\n");
         return;
     }
+
+    //use SO_REUSEADDR
+    int opt = 1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
+    {
+        printf("Error in setsockopt\n");
+        return;
+    }
+
+
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(s2s_port);
@@ -249,7 +259,7 @@ void copyfiless_same(char *src, char *dest, int client_socket_nm, int s2s_port)
     }
 
     int src_fd = open(temp_src, O_RDONLY);
-    int dest_fd = open(temp_dest, O_WRONLY | O_CREAT, 0666);
+    int dest_fd = open(temp_dest, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 
     char buffer[100];
     while (1)
