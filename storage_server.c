@@ -260,6 +260,14 @@ void *naming_server_communication(void *)
 
                 copydirss(src, ss_to_send, client_socket_nm, s2s_conn_port);
             }
+            else if (strcmp(temp, "same") == 0)
+            {
+                char *src = strtok(NULL, " ");
+                char *dest = strtok(NULL, " ");
+                printf("Src: %s\n",src);
+                printf("Dest: %s\n",dest);
+                copydirss_same(src, dest, client_socket_nm, s2s_conn_port);
+            }
         }
 
         close(client_socket_nm);

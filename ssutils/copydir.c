@@ -355,7 +355,6 @@ void copydirss(char *src, ss_info *ss_to_send, int client_socket_nm, int s2s_con
     char *token_temp2 = (char *)malloc(sizeof(char) * 100);
     strcpy(token_temp2, temp2);
 
-
     char *token = strtok(token_temp2, "/");
     while (token != NULL)
     {
@@ -385,4 +384,8 @@ void copydirss(char *src, ss_info *ss_to_send, int client_socket_nm, int s2s_con
         return;
     }
     return;
+}
+void copydirss_same(char *src, char *dest, int client_socket_nm, int s2s_conn_port)
+{
+    
 }
