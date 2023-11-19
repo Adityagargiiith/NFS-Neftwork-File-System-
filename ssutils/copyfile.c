@@ -201,3 +201,73 @@ void copyfiless(char *src, ss_info *ss_to_send, int client_socket_nm,int s2s_por
     close(server_fd);
     return;
 }
+
+void copyfiless_same(char *src, char *dest, int client_socket_nm, int s2s_port)
+{
+    char *temp_src = (char *)malloc(sizeof(char) * 100);
+    strcpy(temp_src, ".");
+    strcat(temp_src, src);
+    temp_src[strlen(temp_src)] = '\0';
+
+    char* temp_token = (char*)malloc(sizeof(char)*100);
+    strcpy(temp_token,src);
+    temp_token[strlen(temp_token)]='\0';
+
+    char *filename = (char *)malloc(sizeof(char) * 100);
+
+
+    char* token = strtok(temp_token,"/");
+    while(token!=NULL)
+    {
+        memset(filename,0,sizeof(filename));
+        strcpy(filename,token);
+        filename[strlen(filename)]='\0';
+
+        token = strtok(NULL,"/");
+    }
+    
+
+    char *temp_dest = (char *)malloc(sizeof(char) * 100);
+    strcpy(temp_dest, ".");
+    strcat(temp_dest, dest);
+    strcat(temp_dest, "/");
+    strcat(temp_dest, filename);
+    temp_dest[strlen(temp_dest)] = '\0';
+
+    struct stat file_stat;
+    int file_status = stat(temp_src, &file_stat);
+    if (file_status < 0)
+    {
+        printf("File does not exist\n");
+        return;
+    }
+
+    if (!(file_stat.st_mode & S_IRUSR))
+    {
+        printf("File does not have read permission\n");
+        return;
+    }
+
+    int src_fd = open(temp_src, O_RDONLY);
+    int dest_fd = open(temp_dest, O_WRONLY | O_CREAT, 0666);
+
+    char buffer[100];
+    while (1)
+    {
+        int number_of_bytes_read = read(src_fd, buffer, sizeof(buffer));
+        if (number_of_bytes_read <= 0)
+        {
+            break;
+        }
+        write(dest_fd, buffer, number_of_bytes_read);
+    }
+
+    int status = SUCCESS;
+    if (send(client_socket_nm, &status, sizeof(status), 0) == -1)
+    {
+        perror("Error in send() function call: ");
+        return;
+    }
+    return;
+
+}

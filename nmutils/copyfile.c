@@ -16,7 +16,7 @@ void copyfilenm(char *src, char *dest, int client_socket)
         return;
     }
 
-    if(ans.dir_or_file == IS_DIR)
+    if (ans.dir_or_file == IS_DIR)
     {
         int status = SRC_IS_DIR;
         if (send(client_socket, &status, sizeof(status), 0) == -1)
@@ -39,7 +39,7 @@ void copyfilenm(char *src, char *dest, int client_socket)
         return;
     }
 
-    if(ans1.dir_or_file == IS_FILE)
+    if (ans1.dir_or_file == IS_FILE)
     {
         int status = DEST_IS_FILE;
         if (send(client_socket, &status, sizeof(status), 0) == -1)
@@ -47,6 +47,70 @@ void copyfilenm(char *src, char *dest, int client_socket)
             perror("Error in send() function call: ");
             return;
         }
+        return;
+    }
+
+    if (ans.s2s_port == ans1.s2s_port && strcmp(ans.ss_ip, ans1.ss_ip) == 0)
+    {
+        int sock_ss = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock_ss == -1)
+        {
+            perror("Error in socket() function call: ");
+            return;
+        }
+        struct sockaddr_in server_address_ss;
+        memset(&server_address_ss, 0, sizeof(server_address_ss));
+        server_address_ss.sin_family = AF_INET;
+        server_address_ss.sin_port = htons(ans.ss_port);
+        server_address_ss.sin_addr.s_addr = inet_addr(ans.ss_ip);
+
+        int connect_success = connect(sock_ss, (struct sockaddr *)&server_address_ss, sizeof(server_address_ss));
+        if (connect_success == -1)
+        {
+            perror("Error in connect() function call: ");
+            return;
+        }
+
+        char *msg_to_ss = (char *)malloc(sizeof(char) * 100);
+        strcpy(msg_to_ss, "copyfile same ");
+        strcat(msg_to_ss, src);
+        strcat(msg_to_ss, " ");
+        strcat(msg_to_ss, dest);
+
+        msg_to_ss[strlen(msg_to_ss)] = '\0';
+        printf("Msg to ss: %s\n", msg_to_ss);
+        if (send(sock_ss, msg_to_ss, strlen(msg_to_ss), 0) == -1)
+        {
+            perror("Error in send() function call: ");
+            return;
+        }
+
+        int status;
+        if (recv(sock_ss, &status, sizeof(status), 0) == -1)
+        {
+            perror("Error in recv() function call: ");
+            return;
+        }
+
+        if (status == SUCCESS)
+        {
+            int status = SUCCESS;
+            if (send(client_socket, &status, sizeof(status), 0) == -1)
+            {
+                perror("Error in send() function call: ");
+                return;
+            }
+        }
+        else
+        {
+            int status = COPY_ERROR;
+            if (send(client_socket, &status, sizeof(status), 0) == -1)
+            {
+                perror("Error in send() function call: ");
+                return;
+            }
+        }
+
         return;
     }
 

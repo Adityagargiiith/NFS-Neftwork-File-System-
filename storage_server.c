@@ -64,7 +64,7 @@ void *naming_server_init(void *)
     initial_data_of_ss.s2s_port = get_random_port_number();
     s2s_conn_port = initial_data_of_ss.s2s_port;
     nm_conn_port = initial_data_of_ss.port_number;
-    client_conn_port=initial_data_of_ss.client_port;
+    client_conn_port = initial_data_of_ss.client_port;
     printf("Enter number of paths: ");
     scanf("%d", &initial_data_of_ss.number_of_paths);
     initial_data_of_ss.paths[initial_data_of_ss.number_of_paths];
@@ -214,7 +214,7 @@ void *naming_server_communication(void *)
                     perror("Error in recv() function call: ");
                     exit(1);
                 }
-                
+
                 copyfilereceive(dest, ss_to_receive, client_socket_nm);
             }
             else if (strcmp(temp, "src") == 0)
@@ -230,15 +230,21 @@ void *naming_server_communication(void *)
 
                 copyfiless(src, ss_to_send, client_socket_nm, s2s_conn_port);
             }
+            else if (strcmp(temp, "same") == 0)
+            {
+                char *src = strtok(NULL, " ");
+                char *dest = strtok(NULL, " ");
+                copyfiless_same(src, dest, client_socket_nm, s2s_conn_port);
+            }
         }
-        else if(strcmp(token, "copydir")==0)
+        else if (strcmp(token, "copydir") == 0)
         {
 
             char *temp = strtok(NULL, " ");
             if (strcmp(temp, "dest") == 0)
             {
                 char *dest = strtok(NULL, " ");
-                printf("Dest: %s\n",dest);
+                printf("Dest: %s\n", dest);
                 ss_info *ss_to_receive = (ss_info *)malloc(sizeof(ss_info));
                 int bytes_received = recv(client_socket_nm, ss_to_receive, sizeof(ss_info), 0);
                 if (bytes_received == -1)
@@ -246,13 +252,13 @@ void *naming_server_communication(void *)
                     perror("Error in recv() function call: ");
                     exit(1);
                 }
-                
+
                 copydirreceive(dest, ss_to_receive, client_socket_nm);
             }
             else if (strcmp(temp, "src") == 0)
             {
                 char *src = strtok(NULL, " ");
-                printf("Src: %s\n",src);
+                printf("Src: %s\n", src);
                 ss_info *ss_to_send = (ss_info *)malloc(sizeof(ss_info));
                 int bytes_received = recv(client_socket_nm, ss_to_send, sizeof(ss_info), 0);
                 if (bytes_received == -1)
@@ -267,8 +273,8 @@ void *naming_server_communication(void *)
             {
                 char *src = strtok(NULL, " ");
                 char *dest = strtok(NULL, " ");
-                printf("Src: %s\n",src);
-                printf("Dest: %s\n",dest);
+                printf("Src: %s\n", src);
+                printf("Dest: %s\n", dest);
                 copydirss_same(src, dest, client_socket_nm, s2s_conn_port);
             }
         }
@@ -296,7 +302,6 @@ void *client_req_handler(void *arg)
     }
     else if (strcmp(token, "write") == 0)
     {
-        /* code */
         char *path = strtok(NULL, " ");
         char *data = strtok(NULL, "\"");
         writess(path, data, client_socket);

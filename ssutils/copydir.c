@@ -385,7 +385,144 @@ void copydirss(char *src, ss_info *ss_to_send, int client_socket_nm, int s2s_con
     }
     return;
 }
+
+void copysamefcn(char *src,char *dest)
+{
+    DIR *dir = opendir(src);
+    if (dir == NULL)
+    {
+        perror("Error in opendir() function call: ");
+        return;
+    }
+
+    struct dirent *curr_elem_of_dir;
+    while ((curr_elem_of_dir = readdir(dir)) != NULL)
+    {
+        if (strcmp(curr_elem_of_dir->d_name, ".") == 0 || strcmp(curr_elem_of_dir->d_name, "..") == 0)
+            continue;
+
+        char *new_src = (char *)malloc(100 * sizeof(char));
+        memset(new_src, 0, 100);
+        char *new_dest = (char *)malloc(100 * sizeof(char));
+        memset(new_dest, 0, 100);
+        strcpy(new_src, src);
+        strcat(new_src, "/");
+        strcat(new_src, curr_elem_of_dir->d_name);
+        new_src[strlen(new_src)] = '\0';
+        strcpy(new_dest, dest);
+        strcat(new_dest, "/");
+        strcat(new_dest, curr_elem_of_dir->d_name);
+        new_dest[strlen(new_dest)] = '\0';
+
+        struct stat path_stat;
+        stat(new_src, &path_stat);
+
+        if (S_ISDIR(path_stat.st_mode))
+        {
+            int status = mkdir(new_dest, 0777);
+            if (status == -1)
+            {
+                perror("Error in mkdir() function call: ");
+                return;
+            }
+            copysamefcn(new_src, new_dest);
+        }
+        else
+        {
+            FILE *fp1 = fopen(new_src, "r");
+            if (fp1 == NULL)
+            {
+                perror("Error in fopen() function call: ");
+                return;
+            }
+
+            FILE *fp2 = fopen(new_dest, "w");
+            if (fp2 == NULL)
+            {
+                perror("Error in fopen() function call: ");
+                return;
+            }
+
+            char ch;
+            while ((ch = fgetc(fp1)) != EOF)
+            {
+                fputc(ch, fp2);
+            }
+            fclose(fp1);
+            fclose(fp2);
+        }
+    }
+
+    closedir(dir);
+
+    return;
+}
 void copydirss_same(char *src, char *dest, int client_socket_nm, int s2s_conn_port)
 {
-    
+    char *original = (char *)malloc(sizeof(char) * 100);
+    getcwd(original, 100);
+
+    char *new_src = (char *)malloc(sizeof(char) * 100);
+    memset(new_src, 0, 100);
+    char *new_dest = (char *)malloc(sizeof(char) * 100);
+    memset(new_dest, 0, 100);
+    strcpy(new_src, original);
+    strcat(new_src, src);
+    new_src[strlen(new_src)] = '\0';
+    strcpy(new_dest, original);
+    strcat(new_dest, dest);
+    new_dest[strlen(new_dest)] = '\0';
+
+    int status = chdir(new_dest);
+    if (status == -1)
+    {
+        perror("Error in chdir() function call: ");
+        return;
+    }
+
+    char *dirname = (char *)malloc(sizeof(char) * 100);
+    memset(dirname, 0, 100);
+
+    char *temp = (char *)malloc(sizeof(char) * 100);
+    memset(temp, 0, 100);
+    strcpy(temp, src);
+
+    char *token = strtok(temp, "/");
+    while (token != NULL)
+    {
+        memset(dirname, 0, 100);
+        strcpy(dirname, token);
+        dirname[strlen(dirname)] = '\0';
+        token = strtok(NULL, "/");
+    }
+
+    int status1 = mkdir(dirname, 0777);
+    if (status1 == -1)
+    {
+        perror("Error in mkdir() function call: ");
+        return;
+    }
+
+    strcat(new_dest, "/");
+    strcat(new_dest, dirname);
+    new_dest[strlen(new_dest)] = '\0';
+
+    copysamefcn(new_src, new_dest);
+
+    status = chdir(original);
+    if (status == -1)
+    {
+        perror("Error in chdir() function call: ");
+        return;
+    }
+
+    int status2 = SUCCESS;
+    if (send(client_socket_nm, &status2, sizeof(status2), 0) == -1)
+    {
+        perror("Error in send() function call: ");
+        return;
+    }
+
+    return;
+
 }

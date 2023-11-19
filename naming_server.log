@@ -4,3 +4,4 @@ Received a request from client: deletedir
 Received a request from client: deletedir
 Received a request from client: write
 Received a request from client: read
+Received a request from client: copydir
