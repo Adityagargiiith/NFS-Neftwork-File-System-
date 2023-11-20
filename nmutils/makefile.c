@@ -1,6 +1,6 @@
 #include "makefile.h"
 
-void makefilenm(char *filename, char* path , int client_soket)
+int makefilenm(char *filename, char* path , int client_soket)
 {
     ss_info ans =search_path_in_trie(path);
 
@@ -10,16 +10,16 @@ void makefilenm(char *filename, char* path , int client_soket)
         if (send(client_soket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
-            return;
+            return -1;
         }
-        return;
+        return -1;
     }
 
     int sock_ss = socket(AF_INET, SOCK_STREAM, 0);
     if(sock_ss == -1)
     {
         perror("Error in socket() function call: ");
-        return;
+        return -1;
     }
 
     struct sockaddr_in server_address_ss;
@@ -32,7 +32,7 @@ void makefilenm(char *filename, char* path , int client_soket)
     if(connect_success == -1)
     {
         perror("Error in connect() function call: ");
-        return;
+        return -1;
     }
 
     char *msg_to_ss = (char *)malloc(sizeof(char) * 100);
@@ -44,14 +44,14 @@ void makefilenm(char *filename, char* path , int client_soket)
     if(send(sock_ss, msg_to_ss, strlen(msg_to_ss), 0) == -1)
     {
         perror("Error in send() function call: ");
-        return;
+        return -1;
     }
 
     int status;
     if(recv(sock_ss, &status, sizeof(status), 0) == -1)
     {
         perror("Error in recv() function call: ");
-        return;
+        return -1;
     }
 
     close(sock_ss);
@@ -73,9 +73,9 @@ void makefilenm(char *filename, char* path , int client_soket)
     if(send(client_soket, &status, sizeof(status), 0) == -1)
     {
         perror("Error in send() function call: ");
-        return;
+        return -1;
     }
     
 
-    return;
+    return status;
 }

@@ -1,2 +1,9 @@
 Received a request from client: write
 Received a request from client: copydir
+Received a request from client: copyfile
+Received a request from client: copyfile
+Received a request from client: copyfile
+Received a request from client: makedir
+Received a request from client: makedir
+Received a request from client: makefile
+Received a request from client: makefile

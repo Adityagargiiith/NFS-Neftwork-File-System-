@@ -3,6 +3,6 @@
 
 #include "../naming_server.h"
 
-void makedirnm(char* dirname, char* path, int client_socket_nm);
+int makedirnm(char* dirname, char* path, int client_socket_nm);
 
 #endif

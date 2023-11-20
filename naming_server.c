@@ -291,7 +291,35 @@ void *client_req_handler(void *arg)
     {
         char *name_of_dir = strtok(NULL, " ");
         char *path = strtok(NULL, " ");
-        makedirnm(name_of_dir, path, client_socket);
+        int res=makedirnm(name_of_dir, path, client_socket);
+        if (res==SUCCESS)
+        {
+            char *parent_path = (char *)malloc(sizeof(char) * 100);
+            strcpy(parent_path, path);
+            parent_path[strlen(parent_path)] = '\0';
+            int ss_number_to_search;
+            for(int ss_number=0;ss_number<curr_number_of_ss;ss_number++)
+            {
+                if (strcmp(initial_data[ss_number].paths[0].path,parent_path)==0)
+                {
+                    ss_number_to_search=ss_number;
+                    break;
+                }
+            }
+            char new_path[100];
+            strcpy(new_path,parent_path);
+            strcat(new_path,"/");
+            strcat(new_path,name_of_dir);
+            new_path[strlen(new_path)]='\0';
+            int curr_index_to_add=initial_data[ss_number_to_search].number_of_paths;
+            strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path,new_path);
+            initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file=1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].permissions=1;
+            backup_pending[ss_number_to_search]=1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending=1;
+            initial_data[ss_number_to_search].number_of_paths++;
+        }
+        
     }
     else if (strcmp(token, "deletedir") == 0)
     {
@@ -302,7 +330,36 @@ void *client_req_handler(void *arg)
     {
         char *filename = strtok(NULL, " ");
         char *path = strtok(NULL, " ");
-        makefilenm(filename, path, client_socket);
+        int res=makefilenm(filename, path, client_socket);
+        if (res==SUCCESS)
+        {
+            char *parent_path = (char *)malloc(sizeof(char) * 100);
+            strcpy(parent_path, path);
+            parent_path[strlen(parent_path)] = '\0';
+            int ss_number_to_search;
+            for(int ss_number=0;ss_number<curr_number_of_ss;ss_number++)
+            {
+                if (strcmp(initial_data[ss_number].paths[0].path,parent_path)==0)
+                {
+                    ss_number_to_search=ss_number;
+                    break;
+                }
+            }
+            char new_path[100];
+            strcpy(new_path,parent_path);
+            strcat(new_path,"/");
+            strcat(new_path,filename);
+            new_path[strlen(new_path)]='\0';
+            int curr_index_to_add=initial_data[ss_number_to_search].number_of_paths;
+            strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path,new_path);
+            initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file=0;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].permissions=1;
+            backup_pending[ss_number_to_search]=1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending=1;
+            initial_data[ss_number_to_search].number_of_paths++;
+
+        }
+        
     }
     else if (strcmp(token, "deletefile") == 0)
     {
@@ -329,8 +386,9 @@ void *client_req_handler(void *arg)
             char *file_name=strrchr(src,'/');
             char *new_path=(char *)malloc(sizeof(char)*100);
             strcpy(new_path,dest);
-            strcat(new_path,"/");
+            // strcat(new_path,"/");
             strcat(new_path,file_name);
+            printf("New path is %s\n",new_path);
             new_path[strlen(new_path)]='\0';
             strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path,new_path);
             initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file=0;

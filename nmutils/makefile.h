@@ -3,6 +3,6 @@
 
 #include "../naming_server.h"
 
-void makefilenm(char *filename, char* path , int client_soket);
+int makefilenm(char *filename, char* path , int client_soket);
 
 #endif

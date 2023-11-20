@@ -237,5 +237,5 @@ int copyfilenm(char *src, char *dest, int client_socket)
 
     close(sock_ss);
     close(sock_ss1);
-    return;
+    return -1;
 }

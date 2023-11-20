@@ -1,6 +1,6 @@
 #include "makedir.h"
 
-void makedirnm(char *name_of_dir, char *path, int client_socket)
+int makedirnm(char *name_of_dir, char *path, int client_socket)
 {
     ss_info ans = search_path_in_trie(path);
 
@@ -10,16 +10,16 @@ void makedirnm(char *name_of_dir, char *path, int client_socket)
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
-            return;
+            return -1;
         }
-        return;
+        return -1;
     }
 
     int sock_ss = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_ss == -1)
     {
         perror("Error in socket() function call: ");
-        return;
+        return -1;
     }
     struct sockaddr_in server_address_ss;
     memset(&server_address_ss, 0, sizeof(server_address_ss));
@@ -31,7 +31,7 @@ void makedirnm(char *name_of_dir, char *path, int client_socket)
     if (connect_success == -1)
     {
         perror("Error in connect() function call: ");
-        return;
+        return -1;
     }
 
     char *msg_to_ss = (char *)malloc(sizeof(char) * 100);
@@ -43,14 +43,14 @@ void makedirnm(char *name_of_dir, char *path, int client_socket)
     if (send(sock_ss, msg_to_ss, strlen(msg_to_ss), 0) == -1)
     {
         perror("Error in send() function call: ");
-        return;
+        return -1;
     }
 
     int status;
     if (recv(sock_ss, &status, sizeof(status), 0) == -1)
     {
         perror("Error in recv() function call: ");
-        return;
+        return -1;
     }
 
     close(sock_ss);
@@ -72,9 +72,9 @@ void makedirnm(char *name_of_dir, char *path, int client_socket)
     if (send(client_socket, &status, sizeof(status), 0) == -1)
     {
         perror("Error in send() function call: ");
-        return;
+        return -1;
     }
 
     print_tree(root);
-    return;
+    return status;
 }
