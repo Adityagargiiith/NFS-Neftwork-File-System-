@@ -12,6 +12,7 @@
         "trie.h": "c",
         "backup.h": "c",
         "copyfile.h": "c",
-        "copydir.h": "c"
+        "copydir.h": "c",
+        "write.h": "c"
     }
 }

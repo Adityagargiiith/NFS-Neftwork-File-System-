@@ -84,7 +84,7 @@ void write_file(char *input)
             return;
         }
 
-        close(sockfd);
+        // close(sockfd);
         // printf("Storage server ip: %s\n", ss->ss_ip);
         // printf("Storage server port: %d\n", ss->ss_port);
 
@@ -93,6 +93,7 @@ void write_file(char *input)
         if (ss_sockfd < 0)
         {
             printf("Error in creating socket\n");
+            close(sockfd);
             return;
         }
 
@@ -110,6 +111,7 @@ void write_file(char *input)
         if (ret < 0)
         {
             printf("Error in connecting to storage server\n");
+            close(sockfd);
             return;
         }
 
@@ -127,6 +129,7 @@ void write_file(char *input)
         if (send(ss_sockfd, msg2, strlen(msg2), 0) < 0)
         {
             printf("Error in sending data to storage server\n");
+            close(sockfd);
             return;
         }
         // printf("here15\n");
@@ -134,22 +137,47 @@ void write_file(char *input)
         if (recv(ss_sockfd, &write_status, sizeof(write_status), 0) < 0)
         {
             printf("Error in receiving data from storage server\n");
+            close(sockfd);
             return;
         }
         // printf("here16\n");
         if (write_status == SUCCESS)
         {
             printf("File written successfully\n");
+            int status_to_nm = SUCCESS;
+            if (send(sockfd, &status_to_nm, sizeof(status_to_nm), 0) < 0)
+            {
+                printf("Error in sending data to naming server\n");
+                close(sockfd);
+                return;
+            }
+            close(sockfd);
             return;
         }
         else if (write_status == FILE_NOT_FOUND)
         {
             printf("File not found\n");
+            int status_to_nm = FILE_NOT_FOUND;
+            if (send(sockfd, &status_to_nm, sizeof(status_to_nm), 0) < 0)
+            {
+                printf("Error in sending data to naming server\n");
+                close(sockfd);
+                return;
+            }
+            close(sockfd);
             return;
         }
         else
         {
             printf("Error in writing file\n");
+            int status_to_nm = 125;
+            if (send(sockfd, &status_to_nm, sizeof(status_to_nm), 0) < 0)
+            {
+                printf("Error in sending data to naming server\n");
+                close(sockfd);
+                return;
+            }
+            close(sockfd);
             return;
         }
         printf("here17\n");
@@ -157,11 +185,28 @@ void write_file(char *input)
     else if (status == FILE_NOT_FOUND)
     {
         printf("File not found\n");
+        int status_to_nm = FILE_NOT_FOUND;
+        if (send(sockfd, &status_to_nm, sizeof(status_to_nm), 0) < 0)
+        {
+            printf("Error in sending data to naming server\n");
+            close(sockfd);
+            return;
+        }
+
+        close(sockfd);
         return;
     }
     else
     {
         printf("Error in writing file\n");
+        int status_to_nm = 125;
+        if (send(sockfd, &status_to_nm, sizeof(status_to_nm), 0) < 0)
+        {
+            printf("Error in sending data to naming server\n");
+            close(sockfd);
+            return;
+        }
+        close(sockfd);
         return;
     }
 }

@@ -43,6 +43,11 @@ void *ss_backup_update(void *)
                 usleep(5000000);
                 for (int i = 0; i < initial_data[ss_number].number_of_paths; i++)
                 {
+                    if (initial_data[ss_number].paths[i].backup_pending == 0)
+                    {
+                        /* code */
+                        continue;
+                    }
                     if (backup_arr[ss_number].replica1_ss_index != -1)
                     {
                         ss_new sender, receiver;
@@ -96,7 +101,7 @@ void *ss_backup_update(void *)
                         backup_pending[ss_number] = 0;
                     }
                 }
-                printf("Unlocked\n");
+                printf("Done by %d\n", ss_number);
                 // pthread_mutex_unlock(&mutex);
             }
         }
@@ -308,13 +313,59 @@ void *client_req_handler(void *arg)
     {
         char *src = strtok(NULL, " ");
         char *dest = strtok(NULL, " ");
-        copyfilenm(src, dest, client_socket);
+        int res=copyfilenm(src, dest, client_socket);
+        if (res == SUCCESS)
+        {
+            int ss_number_to_search;
+            for(int ss_number=0;ss_number<curr_number_of_ss;ss_number++)
+            {
+                if (strcmp(initial_data[ss_number].paths[0].path,dest)==0)
+                {
+                    ss_number_to_search=ss_number;
+                    break;
+                }
+            }
+            int curr_index_to_add=initial_data[ss_number_to_search].number_of_paths;
+            char *file_name=strrchr(src,'/');
+            char *new_path=(char *)malloc(sizeof(char)*100);
+            strcpy(new_path,dest);
+            strcat(new_path,"/");
+            strcat(new_path,file_name);
+            new_path[strlen(new_path)]='\0';
+            strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path,new_path);
+            initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file=0;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].permissions=1;
+            backup_pending[ss_number_to_search]=1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending=1;
+            initial_data[ss_number_to_search].number_of_paths++;
+        }
+        
     }
     else if (strcmp(token, "copydir") == 0)
     {
         char *src = strtok(NULL, " ");
         char *dest = strtok(NULL, " ");
-        copydirnm(src, dest, client_socket);
+        int res=copydirnm(src, dest, client_socket);
+        if (res==SUCCESS)
+        {
+            int ss_number_to_search;
+            for(int ss_number=0;ss_number<curr_number_of_ss;ss_number++)
+            {
+                if (strcmp(initial_data[ss_number].paths[0].path,dest)==0)
+                {
+                    ss_number_to_search=ss_number;
+                    break;
+                }
+            }
+            int curr_index_to_add=initial_data[ss_number_to_search].number_of_paths;
+            strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path,src);
+            initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file=1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].permissions=1;
+            backup_pending[ss_number_to_search]=1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending=1;
+            initial_data[ss_number_to_search].number_of_paths++; 
+        }
+        
     }
     else if (strcmp(token, "read") == 0)
     {
@@ -329,7 +380,24 @@ void *client_req_handler(void *arg)
         /* code */
         char *filename = strtok(NULL, " ");
         printf("Filename is %s\n", filename);
-        writenm(filename, client_socket);
+        int res=writenm(filename, client_socket);
+        if (res == SUCCESS)
+        {
+            printf("Success\n");
+            for (int ss_number = 0; ss_number < curr_number_of_ss; ss_number++)
+            {
+                for (int path_index = 0; path_index < initial_data[ss_number].number_of_paths; path_index++)
+                {
+                    if (strcmp(initial_data[ss_number].paths[path_index].path, filename) == 0)
+                    {
+                        backup_pending[ss_number] = 1;
+                        initial_data[ss_number].paths[path_index].backup_pending = 1;
+                        break;
+                    }
+                }
+            }
+        }
+        
     }
 
     close(client_socket);

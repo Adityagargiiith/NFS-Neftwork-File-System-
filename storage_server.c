@@ -82,6 +82,7 @@ void *naming_server_init(void *)
     // printf("Here151\n");
     for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
     {
+        initial_data_of_ss.paths[i].backup_pending = 1;
         struct stat path_stat;
         char path2[100];
         path2[0] = '.';

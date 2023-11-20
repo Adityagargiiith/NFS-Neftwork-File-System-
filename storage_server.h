@@ -34,6 +34,7 @@ struct details_of_path
     char path[400];
     int permissions;
     int dir_or_file;
+    int backup_pending;
 };
 
 struct data_of_ss

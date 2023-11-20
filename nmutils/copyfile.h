@@ -3,6 +3,6 @@
 
 #include "../naming_server.h"
 
-void copyfilenm(char *src, char *dest, int client_socket);
+int copyfilenm(char *src, char *dest, int client_socket);
 
 #endif

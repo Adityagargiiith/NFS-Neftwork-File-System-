@@ -1,6 +1,6 @@
 #include "copyfile.h"
 
-void copyfilenm(char *src, char *dest, int client_socket)
+int copyfilenm(char *src, char *dest, int client_socket)
 {
     printf("Src: %s\n", src);
     printf("Dest: %s\n", dest);
@@ -11,9 +11,9 @@ void copyfilenm(char *src, char *dest, int client_socket)
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
-            return;
+            return -1;
         }
-        return;
+        return -1;
     }
 
     if (ans.dir_or_file == IS_DIR)
@@ -22,9 +22,9 @@ void copyfilenm(char *src, char *dest, int client_socket)
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
-            return;
+            return -1;
         }
-        return;
+        return -1;
     }
 
     ss_info ans1 = search_path_in_trie(dest);
@@ -34,9 +34,9 @@ void copyfilenm(char *src, char *dest, int client_socket)
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
-            return;
+            return -1;
         }
-        return;
+        return -1;
     }
 
     if (ans1.dir_or_file == IS_FILE)
@@ -45,9 +45,9 @@ void copyfilenm(char *src, char *dest, int client_socket)
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
-            return;
+            return -1;
         }
-        return;
+        return -1;
     }
 
     if (ans.s2s_port == ans1.s2s_port && strcmp(ans.ss_ip, ans1.ss_ip) == 0)
@@ -56,7 +56,7 @@ void copyfilenm(char *src, char *dest, int client_socket)
         if (sock_ss == -1)
         {
             perror("Error in socket() function call: ");
-            return;
+            return -1;
         }
         struct sockaddr_in server_address_ss;
         memset(&server_address_ss, 0, sizeof(server_address_ss));
@@ -68,7 +68,7 @@ void copyfilenm(char *src, char *dest, int client_socket)
         if (connect_success == -1)
         {
             perror("Error in connect() function call: ");
-            return;
+            return -1;
         }
 
         char *msg_to_ss = (char *)malloc(sizeof(char) * 100);
@@ -82,14 +82,14 @@ void copyfilenm(char *src, char *dest, int client_socket)
         if (send(sock_ss, msg_to_ss, strlen(msg_to_ss), 0) == -1)
         {
             perror("Error in send() function call: ");
-            return;
+            return -1;
         }
 
         int status;
         if (recv(sock_ss, &status, sizeof(status), 0) == -1)
         {
             perror("Error in recv() function call: ");
-            return;
+            return -1;
         }
 
         if (status == SUCCESS)
@@ -98,8 +98,9 @@ void copyfilenm(char *src, char *dest, int client_socket)
             if (send(client_socket, &status, sizeof(status), 0) == -1)
             {
                 perror("Error in send() function call: ");
-                return;
+                return -1;
             }
+            return SUCCESS;
         }
         else
         {
@@ -107,11 +108,12 @@ void copyfilenm(char *src, char *dest, int client_socket)
             if (send(client_socket, &status, sizeof(status), 0) == -1)
             {
                 perror("Error in send() function call: ");
-                return;
+                return -1;
             }
+            return -1;
         }
 
-        return;
+        return -1;
     }
 
     printf("Port 1: %d\n", ans.ss_port);
@@ -121,7 +123,7 @@ void copyfilenm(char *src, char *dest, int client_socket)
     if (sock_ss == -1)
     {
         perror("Error in socket() function call: ");
-        return;
+        return -1;
     }
     struct sockaddr_in server_address_ss;
     memset(&server_address_ss, 0, sizeof(server_address_ss));
@@ -133,7 +135,7 @@ void copyfilenm(char *src, char *dest, int client_socket)
     if (connect_success == -1)
     {
         perror("Error in connect() function call: ");
-        return;
+        return -1;
     }
 
     char *msg_to_ss = (char *)malloc(sizeof(char) * 100);
@@ -145,7 +147,7 @@ void copyfilenm(char *src, char *dest, int client_socket)
     if (send(sock_ss, msg_to_ss, strlen(msg_to_ss), 0) == -1)
     {
         perror("Error in send() function call: ");
-        return;
+        return -1;
     }
 
     usleep(1000);
@@ -153,14 +155,14 @@ void copyfilenm(char *src, char *dest, int client_socket)
     if (send(sock_ss, &ans1, sizeof(ans1), 0) == -1)
     {
         perror("Error in send() function call: ");
-        return;
+        return -1;
     }
 
     int sock_ss1 = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_ss1 == -1)
     {
         perror("Error in socket() function call: ");
-        return;
+        return -1;
     }
     struct sockaddr_in server_address_ss1;
     memset(&server_address_ss1, 0, sizeof(server_address_ss1));
@@ -172,7 +174,7 @@ void copyfilenm(char *src, char *dest, int client_socket)
     if (connect_success1 == -1)
     {
         perror("Error in connect() function call: ");
-        return;
+        return -1;
     }
 
     char *msg_to_ss1 = (char *)malloc(sizeof(char) * 100);
@@ -185,7 +187,7 @@ void copyfilenm(char *src, char *dest, int client_socket)
     if (send(sock_ss1, msg_to_ss1, strlen(msg_to_ss1), 0) == -1)
     {
         perror("Error in send() function call: ");
-        return;
+        return -1;
     }
 
     usleep(1000);
@@ -193,7 +195,7 @@ void copyfilenm(char *src, char *dest, int client_socket)
     if (send(sock_ss1, &ans, sizeof(ans), 0) == -1)
     {
         perror("Error in send() function call: ");
-        return;
+        return -1;
     }
 
     printf("Sent\n");
@@ -202,14 +204,14 @@ void copyfilenm(char *src, char *dest, int client_socket)
     if (recv(sock_ss, &status, sizeof(status), 0) == -1)
     {
         perror("Error in recv() function call: ");
-        return;
+        return -1;
     }
 
     int status1;
     if (recv(sock_ss1, &status1, sizeof(status1), 0) == -1)
     {
         perror("Error in recv() function call: ");
-        return;
+        return -1;
     }
 
     if (status == SUCCESS && status1 == SUCCESS)
@@ -218,8 +220,9 @@ void copyfilenm(char *src, char *dest, int client_socket)
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
-            return;
+            return -1;
         }
+        return SUCCESS;
     }
     else
     {
@@ -227,8 +230,9 @@ void copyfilenm(char *src, char *dest, int client_socket)
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
-            return;
+            return -1;
         }
+        return -1;
     }
 
     close(sock_ss);
