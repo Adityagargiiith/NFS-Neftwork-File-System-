@@ -8,12 +8,17 @@ void info(char *input)
     // char *array[2];
  array[0] = strtok(input, " ");
 array[1] = strtok(NULL, " ");
+array[2] = strtok(NULL, " ");
+    // array[0] = strtok(input, " ");
+// array[1] = strtok(NULL, " ");
     char path[50];
     strcpy(path, ".");
     // strcat(path, array[2]);
+    strcat(path, array[2]);
+    strcat(path, "/");
     strcat(path, array[1]);
     // printf("%s\n", path);
-
+// printf("%s\n", path);
      struct stat fileStat;
 
     // Use stat function to get file information
