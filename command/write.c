@@ -74,8 +74,8 @@ void write_file(char *input)
         printf("Error in receiving data from naming server\n");
         return;
     }
-
-    if (status == SUCCESS)
+    
+    else if (status == SUCCESS)
     {
         ss_info *ss = (ss_info *)malloc(sizeof(ss_info));
         if (recv(sockfd, ss, sizeof(ss_info), 0) < 0)
@@ -124,7 +124,7 @@ void write_file(char *input)
         strcat(msg2, data);
 
         msg2[strlen(msg2)] = '\0';
-        // printf("%s\n",msg2);
+        printf("%s\n",msg2);
         // printf("Yaha tak bhi aa gaye\n");
         if (send(ss_sockfd, msg2, strlen(msg2), 0) < 0)
         {
@@ -167,6 +167,19 @@ void write_file(char *input)
             close(sockfd);
             return;
         }
+        else if (write_status==-2)
+        {
+            printf("Some other client is writing to the file\n");
+            int status_to_nm = -2;
+            if (send(sockfd, &status_to_nm, sizeof(status_to_nm), 0) < 0)
+            {
+                printf("Error in sending data to naming server\n");
+                close(sockfd);
+                return;
+            }
+            close(sockfd);
+        }
+        
         else
         {
             printf("Error in writing file\n");
@@ -180,11 +193,11 @@ void write_file(char *input)
             close(sockfd);
             return;
         }
-        printf("here17\n");
+        // printf("here17\n");
     }
     else if (status == FILE_NOT_FOUND)
     {
-        printf("File not found\n");
+        printf("File not found111\n");
         int status_to_nm = FILE_NOT_FOUND;
         if (send(sockfd, &status_to_nm, sizeof(status_to_nm), 0) < 0)
         {
