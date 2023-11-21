@@ -138,6 +138,7 @@ void read_file(char *input)
                 number_of_bytes_recieved += number_of_bytes_recieved_now;
                 printf("%s", buffer);
             }
+            printf("\n");
         }
     }
     else if (status == FILE_NOT_FOUND)
