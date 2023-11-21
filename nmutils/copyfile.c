@@ -7,8 +7,6 @@ extern struct data_of_ss initial_data[100];
 
 int copyfilenm(char *src, char *dest, int client_socket)
 {
-    printf("Src: %s\n", src);
-    printf("Dest: %s\n", dest);
     ss_info ans;
 
     ss_info cache_ans = find_in_cache(src);
@@ -27,6 +25,7 @@ int copyfilenm(char *src, char *dest, int client_socket)
     if (ans.ss_port == -1)
     {
         int status = SRC_NOT_FOUND;
+        printf(YELLOW "Source not found in copyfilenm\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -38,6 +37,7 @@ int copyfilenm(char *src, char *dest, int client_socket)
     if (ans.dir_or_file == IS_DIR)
     {
         int status = SRC_IS_DIR;
+        printf(YELLOW "Source is a directory in copyfilenm\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -60,6 +60,7 @@ int copyfilenm(char *src, char *dest, int client_socket)
     if (curr_ss_num == -1)
     {
         int status = SRC_NOT_FOUND;
+        printf(YELLOW "Source not found in copyfilenm\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -76,6 +77,7 @@ int copyfilenm(char *src, char *dest, int client_socket)
             if (failure[backup_arr[curr_ss_num].replica2_ss_index] == 1)
             {
                 int status = SS_DOWN;
+                printf(YELLOW "Source storage server down in copyfilenm\n" RESET);
                 if (send(client_socket, &status, sizeof(status), 0) == -1)
                 {
                     perror("Error in send() function call: ");
@@ -121,6 +123,7 @@ int copyfilenm(char *src, char *dest, int client_socket)
     if (ans1.ss_port == -1)
     {
         int status = DEST_NOT_FOUND;
+        printf(YELLOW "Destination not found in copyfilenm\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -132,6 +135,7 @@ int copyfilenm(char *src, char *dest, int client_socket)
     if (ans1.dir_or_file == IS_FILE)
     {
         int status = DEST_IS_FILE;
+        printf(YELLOW "Destination is a file in copyfilenm\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -154,6 +158,7 @@ int copyfilenm(char *src, char *dest, int client_socket)
     if (curr_ss_num1 == -1)
     {
         int status = DEST_NOT_FOUND;
+        printf(YELLOW "Destination not found in copyfilenm\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -170,6 +175,7 @@ int copyfilenm(char *src, char *dest, int client_socket)
             if (failure[backup_arr[curr_ss_num1].replica2_ss_index] == 1)
             {
                 int status = SS_DOWN;
+                printf(YELLOW "Destination storage server down in copyfilenm\n" RESET);
                 if (send(client_socket, &status, sizeof(status), 0) == -1)
                 {
                     perror("Error in send() function call: ");
@@ -225,7 +231,6 @@ int copyfilenm(char *src, char *dest, int client_socket)
         strcat(msg_to_ss, dest);
 
         msg_to_ss[strlen(msg_to_ss)] = '\0';
-        printf("Msg to ss: %s\n", msg_to_ss);
         if (send(sock_ss, msg_to_ss, strlen(msg_to_ss), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -242,6 +247,7 @@ int copyfilenm(char *src, char *dest, int client_socket)
         if (status == SUCCESS)
         {
             int status = SUCCESS;
+            printf(GREEN "File copied successfully in copyfilenm\n" RESET);
             if (send(client_socket, &status, sizeof(status), 0) == -1)
             {
                 perror("Error in send() function call: ");
@@ -258,6 +264,7 @@ int copyfilenm(char *src, char *dest, int client_socket)
         else
         {
             int status = COPY_ERROR;
+            printf(RED "Error in copying file in copyfilenm\n" RESET);
             if (send(client_socket, &status, sizeof(status), 0) == -1)
             {
                 perror("Error in send() function call: ");
@@ -269,8 +276,6 @@ int copyfilenm(char *src, char *dest, int client_socket)
         return -1;
     }
 
-    printf("Port 1: %d\n", ans.ss_port);
-    printf("Port 2: %d\n", ans1.ss_port);
 
     int sock_ss = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_ss == -1)
@@ -296,7 +301,6 @@ int copyfilenm(char *src, char *dest, int client_socket)
     strcat(msg_to_ss, src);
 
     msg_to_ss[strlen(msg_to_ss)] = '\0';
-    printf("Msg to ss: %s\n", msg_to_ss);
     if (send(sock_ss, msg_to_ss, strlen(msg_to_ss), 0) == -1)
     {
         perror("Error in send() function call: ");
@@ -335,7 +339,6 @@ int copyfilenm(char *src, char *dest, int client_socket)
     strcat(msg_to_ss1, dest);
 
     msg_to_ss1[strlen(msg_to_ss1)] = '\0';
-    printf("Msg to ss1: %s\n", msg_to_ss1);
 
     if (send(sock_ss1, msg_to_ss1, strlen(msg_to_ss1), 0) == -1)
     {
@@ -351,7 +354,6 @@ int copyfilenm(char *src, char *dest, int client_socket)
         return -1;
     }
 
-    printf("Sent\n");
 
     int status;
     if (recv(sock_ss, &status, sizeof(status), 0) == -1)
@@ -370,6 +372,7 @@ int copyfilenm(char *src, char *dest, int client_socket)
     if (status == SUCCESS && status1 == SUCCESS)
     {
         int status = SUCCESS;
+        printf(GREEN "File copied successfully in copyfilenm\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -387,6 +390,7 @@ int copyfilenm(char *src, char *dest, int client_socket)
     else
     {
         int status = COPY_ERROR;
+        printf(RED "Error in copying file in copyfilenm\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");

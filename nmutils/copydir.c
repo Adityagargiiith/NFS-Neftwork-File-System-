@@ -22,11 +22,10 @@ int copydirnm(char *src, char *dest, int client_socket)
         add_to_cache(src, ans);
     }
 
-
-
     if (ans.ss_port == -1)
     {
         int status = SRC_NOT_FOUND;
+        printf(YELLOW "Source not found for copydir\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -38,6 +37,7 @@ int copydirnm(char *src, char *dest, int client_socket)
     if (ans.dir_or_file == IS_FILE)
     {
         int status = SRC_IS_FILE;
+        printf(YELLOW "Source is a file for copydir\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -61,6 +61,7 @@ int copydirnm(char *src, char *dest, int client_socket)
     if (curr_ss_num == -1)
     {
         int status = INVALID_PATH;
+        printf(YELLOW "Invalid path for copydir\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -77,6 +78,7 @@ int copydirnm(char *src, char *dest, int client_socket)
             if (failure[backup_arr[curr_ss_num].replica2_ss_index] == 1)
             {
                 int status = SS_DOWN;
+                printf(YELLOW "Storage server down for copydir\n" RESET);
                 if (send(client_socket, &status, sizeof(status), 0) == -1)
                 {
                     perror("Error in send() function call: ");
@@ -123,6 +125,7 @@ int copydirnm(char *src, char *dest, int client_socket)
     if (ans1.ss_port == -1)
     {
         int status = DEST_NOT_FOUND;
+        printf(YELLOW "Destination not found for copydir\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -134,6 +137,7 @@ int copydirnm(char *src, char *dest, int client_socket)
     if (ans1.dir_or_file == IS_FILE)
     {
         int status = DEST_IS_FILE;
+        printf(YELLOW "Destination is a file for copydir\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -157,6 +161,7 @@ int copydirnm(char *src, char *dest, int client_socket)
     if (curr_ss_num1 == -1)
     {
         int status = INVALID_PATH;
+        printf(YELLOW "Invalid path for copydir\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -173,6 +178,7 @@ int copydirnm(char *src, char *dest, int client_socket)
             if (failure[backup_arr[curr_ss_num1].replica2_ss_index] == 1)
             {
                 int status = SS_DOWN;
+                printf(YELLOW "Storage server down for copydir\n" RESET);
                 if (send(client_socket, &status, sizeof(status), 0) == -1)
                 {
                     perror("Error in send() function call: ");
@@ -243,6 +249,7 @@ int copydirnm(char *src, char *dest, int client_socket)
         if (status == SUCCESS)
         {
             int status = SUCCESS;
+            printf(GREEN "Copydir successful\n" RESET);
             if (send(client_socket, &status, sizeof(status), 0) == -1)
             {
                 perror("Error in send() function call: ");
@@ -258,6 +265,7 @@ int copydirnm(char *src, char *dest, int client_socket)
         else
         {
             int status = COPY_ERROR;
+            printf(RED "Copydir unsuccessful\n" RESET);
             if (send(client_socket, &status, sizeof(status), 0) == -1)
             {
                 perror("Error in send() function call: ");
@@ -363,6 +371,7 @@ int copydirnm(char *src, char *dest, int client_socket)
     if (status == SUCCESS && status1 == SUCCESS)
     {
         int status = SUCCESS;
+        printf(GREEN "Copydir successful\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -379,6 +388,7 @@ int copydirnm(char *src, char *dest, int client_socket)
     else
     {
         int status = COPY_ERROR;
+        printf(RED "Copydir unsuccessful\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");

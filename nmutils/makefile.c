@@ -28,6 +28,7 @@ int makefilenm(char *filename, char* path , int client_soket)
     if(ans.ss_port==-1)
     {
         int status = INVALID_PATH;
+        printf(YELLOW "Directory not found in makefile\n" RESET);
         if (send(client_soket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -39,6 +40,7 @@ int makefilenm(char *filename, char* path , int client_soket)
     if(ans.dir_or_file==IS_FILE)
     {
         int status = INVALID_PATH;
+        printf(YELLOW "Path is a file in makefile\n" RESET);
         if (send(client_soket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -60,6 +62,7 @@ int makefilenm(char *filename, char* path , int client_soket)
     if(curr_ss_num==-1)
     {
         int status = INVALID_PATH;
+        printf(YELLOW "Directory not found in makefile\n" RESET);
         if (send(client_soket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -78,6 +81,7 @@ int makefilenm(char *filename, char* path , int client_soket)
             if(failure[backup_arr[curr_ss_num].replica2_ss_index]==1)
             {
                 int status = SS_DOWN;
+                printf(YELLOW "Storage server is down in makefile\n" RESET);
                 if (send(client_soket, &status, sizeof(status), 0) == -1)
                 {
                     perror("Error in send() function call: ");
@@ -155,10 +159,11 @@ int makefilenm(char *filename, char* path , int client_soket)
     if(status == SUCCESS)
     {
         insert_into_tree_new(new_path, 1, copy.ss_ip, copy.ss_port, copy.client_port, copy.s2s_port, 0);
+        printf(GREEN "File created successfully\n" RESET);
     }
     else
     {
-        printf("Error in making file\n");
+        printf(RED "Error in creating file\n" RESET);
     }
 
     if(send(client_soket, &status, sizeof(status), 0) == -1)

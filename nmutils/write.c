@@ -27,6 +27,7 @@ int writenm(char *path, int client_soket)
     if (res.ss_port == -1)
     {
         int to_send = FILE_NOT_FOUND;
+        printf(YELLOW "File not found in write\n" RESET);
         if (send(client_soket, &to_send, sizeof(int), 0) < 0)
         {
             perror("Error in send() function call: ");
@@ -48,6 +49,7 @@ int writenm(char *path, int client_soket)
         if (curr_ss_num == -1)
         {
             int to_send = FILE_NOT_FOUND;
+            printf(YELLOW "File not found in write\n" RESET);
             if (send(client_soket, &to_send, sizeof(int), 0) < 0)
             {
                 perror("Error in send() function call: ");
@@ -90,6 +92,7 @@ int writenm(char *path, int client_soket)
         }
 
         int to_send = SUCCESS;
+        printf(GREEN "File found in write\n" RESET);
         if (send(client_soket, &to_send, sizeof(int), 0) < 0)
         {
             perror("Error in send() function call: ");
@@ -109,6 +112,7 @@ int writenm(char *path, int client_soket)
         }
         if (status == SUCCESS)
         {
+            printf(GREEN "File written successfully\n" RESET);
             return 0;
         }
         else

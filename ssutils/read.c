@@ -4,15 +4,12 @@ void readss(char *path2, int client_soket)
 {
     // check for the read premissions
     // use the struct stat
-    printf("Here 0\n");
     char *path = (char *)malloc(sizeof(char) * (strlen(path2) + 2));
     strcpy(path,".");
     strcat(path,path2);
-    path[strlen(path2) + 1] = '\0';
-    printf("Here 1\n");
+    path[strlen(path2) + 1] = '\0' ;
     struct stat file_stat;
     int file_status = stat(path, &file_stat);
-    printf("Here 2\n");
     if (file_status < 0)
     {
         printf("File does not exist\n");
@@ -33,7 +30,6 @@ void readss(char *path2, int client_soket)
     int number_of_bytes_to_send=send_size;
     int file_fd=open(path,O_RDONLY);
     char buffer[100];
-    printf("Here 3\n");
     while(1)
     {
         if(number_of_bytes_sent>=number_of_bytes_to_send)

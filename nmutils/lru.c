@@ -25,10 +25,6 @@ void add_to_cache(char *key, ss_info value)
     entry->key = strdup(key);
     printf("key: %s\n", entry->key);
     entry->value = value;
-    printf("value.ss_port: %d\n", entry->value.ss_port);
-    printf("value.s2s_port: %d\n", entry->value.s2s_port);
-    printf("value.dir_or_file: %d\n", entry->value.dir_or_file);
-    printf("value.ss_ip: %s\n", entry->value.ss_ip);
 
     HASH_FIND_STR(head, key, tmp_entry);
     if (tmp_entry)

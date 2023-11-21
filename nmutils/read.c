@@ -16,23 +16,17 @@ void readnm(char *path, int client_soket)
     if (cache_ans.ss_port != -5)
     {
         ans = cache_ans;
-        printf("Found in cache\n");
-        printf("ss_port: %d\n", ans.ss_port);
-        printf("s2s_port: %d\n", ans.s2s_port);
     }
     else
     {
         ans = search_path_in_trie(path);
         add_to_cache(path, ans);
-        printf("Not found in cache\n");
-        printf("ss_port: %d\n", ans.ss_port);
-        printf("s2s_port: %d\n", ans.s2s_port);
-
     }
 
     if (ans.ss_port == -1)
     {
         int status = FILE_NOT_FOUND;
+        printf(YELLOW "File not found in read\n" RESET);
         if (send(client_soket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -54,6 +48,7 @@ void readnm(char *path, int client_soket)
         if (curr_ss_num == -1)
         {
             int status = FILE_NOT_FOUND;
+            printf(YELLOW "File not found in read\n" RESET);
             if (send(client_soket, &status, sizeof(status), 0) == -1)
             {
                 perror("Error in send() function call: ");
@@ -69,6 +64,7 @@ void readnm(char *path, int client_soket)
                 if (failure[backup_arr[curr_ss_num].replica2_ss_index] == 1)
                 {
                     int status = SS_DOWN;
+                    printf(YELLOW "All 3 storage servers are down in read\n" RESET);
                     if (send(client_soket, &status, sizeof(status), 0) == -1)
                     {
                         perror("Error in send() function call: ");
@@ -97,6 +93,7 @@ void readnm(char *path, int client_soket)
         }
 
         int status = SUCCESS;
+        printf(GREEN "File found in read\n" RESET);
         if (send(client_soket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");

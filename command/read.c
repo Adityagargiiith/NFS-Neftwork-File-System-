@@ -88,7 +88,7 @@ void read_file(char *input)
         serv_addr2.sin_family = AF_INET;
         serv_addr2.sin_port = htons(ss->client_port);
         serv_addr2.sin_addr.s_addr = inet_addr(ss->ss_ip);
-        printf("port %d\n", ss->ss_port);
+        usleep(10);
         int ret2 = connect(sockfd2, (struct sockaddr *)&serv_addr2, sizeof(serv_addr2));
         if (ret2 < 0)
         {
@@ -138,8 +138,6 @@ void read_file(char *input)
                 number_of_bytes_recieved += number_of_bytes_recieved_now;
                 printf("%s", buffer);
             }
-            printf("\n");
-            printf("End of file\n");
         }
     }
     else if (status == FILE_NOT_FOUND)

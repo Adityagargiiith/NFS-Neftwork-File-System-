@@ -86,7 +86,6 @@ void writess(char *path, char *data, int client_soket)
             return;
         }
         int number_of_bytes_written = write(fd, data, strlen(data));
-        usleep(10000000);
         if (number_of_bytes_written == -1)
         {
             perror("Error in write() function call: ");

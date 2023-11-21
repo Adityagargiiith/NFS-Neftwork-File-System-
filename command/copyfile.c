@@ -10,28 +10,28 @@ void copyfile(char *input)
     char *src = strtok(NULL, " ");
     if (src == NULL)
     {
-        printf("Usage: copyfile <src> <dest>\n");
+        printf(MAGENTA "Usage: copyfile <src> <dest>\n" RESET);
         return;
     }
 
     char *dest = strtok(NULL, " ");
     if (dest == NULL)
     {
-        printf("Usage: copyfile <src> <dest>\n");
+        printf(MAGENTA "Usage: copyfile <src> <dest>\n" RESET);
         return;
     }
 
     char *tmp = strtok(NULL, " ");
     if (tmp != NULL)
     {
-        printf("Usage: copyfile <src> <dest>\n");
+        printf(MAGENTA "Usage: copyfile <src> <dest>\n" RESET);
         return;
     }
 
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
     {
-        printf("Error in creating socket\n");
+        printf(RED "Error in creating socket\n" RESET);
         return;
     }
 
@@ -45,7 +45,7 @@ void copyfile(char *input)
     int ret = connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
     if (ret < 0)
     {
-        printf("Error in connecting to naming server\n");
+        printf(RED "Error in connecting to naming server\n" RESET);
         return;
     }
 
@@ -58,51 +58,50 @@ void copyfile(char *input)
     int len = strlen(msg);
     msg[len] = '\0';
 
-    printf("Message sent: %s\n", msg);
     if (send(sockfd, msg, strlen(msg), 0) < 0)
     {
-        printf("Error in sending message to naming server\n");
+        printf(RED "Error in sending message to naming server\n" RESET);
         return;
     }
 
     int status;
     if (recv(sockfd, &status, sizeof(status), 0) < 0)
     {
-        printf("Error in recieving status from naming server\n");
+        printf(RED "Error in receiving message from naming server\n" RESET);
         return;
     }
 
     if (status == SUCCESS)
     {
-        printf("File copied successfully\n");
+        printf(GREEN "File copied successfully\n" RESET);
     }
     else if (status == SRC_NOT_FOUND)
     {
-        printf("Source file not found\n");
+        printf(RED "Source file not found\n" RESET);
     }
     else if (status == DEST_NOT_FOUND)
     {
-        printf("Destination file not found\n");
+        printf(RED "Destination file not found\n" RESET);
     }
     else if (status == SRC_IS_DIR)
     {
-        printf("Source is a directory\n");
+        printf(RED "Source is a directory\n" RESET);
     }
     else if (status == DEST_IS_DIR)
     {
-        printf("Destination is a directory\n");
+        printf(RED "Destination is a directory\n" RESET);
     }
     else if (status == SRC_IS_FILE)
     {
-        printf("Source is a file\n");
+        printf(RED "Source is a file\n" RESET);
     }
     else if (status == DEST_IS_FILE)
     {
-        printf("Destination is a file\n");
+        printf(RED "Destination is a file\n" RESET);
     }
     else if (status == COPY_ERROR)
     {
-        printf("Error in copying file\n");
+        printf(RED "Unknown error occured while copying file\n" RESET);
     }
     else
     {

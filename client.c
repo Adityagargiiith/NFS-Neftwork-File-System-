@@ -2,8 +2,8 @@
 
 int main()
 {
-    printf("------------------Welcome to the NFS------------------\n");
-    printf("Use help to get a list of commands and their usage\n");
+    printf(CYAN "------------------- Welcome to the NFS Client -------------------\n" RESET);
+    printf(CYAN "------------------- Type 'help' for list of commands --------------\n" RESET);
 
     int pid = fork();
     if (pid == -1)
@@ -17,7 +17,7 @@ int main()
         memset(input, 0, 100);
         while (1)
         {
-            printf(">> ");
+            printf(BLUE ">> " RESET);
             fgets(input, 100, stdin);
             input[strlen(input) - 1] = '\0';
 
@@ -62,11 +62,11 @@ int main()
             {
                 info(input);
             }
-            else if( strcmp(command, "copydir") ==0)
+            else if (strcmp(command, "copydir") == 0)
             {
                 copydir(input);
             }
-            else if(strcmp(command,"copyfile")==0)
+            else if (strcmp(command, "copyfile") == 0)
             {
                 copyfile(input);
             }
@@ -74,9 +74,18 @@ int main()
             {
                 exit(0);
             }
+            else if (strcmp(command, "list") == 0)
+            {
+                list();
+            }
+            else if (strcmp(command, "info") == 0)
+            {
+                char *path = strtok(NULL, " ");
+                info(path);
+            }
             else
             {
-                printf("Invalid command\n");
+                printf(MAGENTA "Command not found\n" RESET);
             }
         }
     }
@@ -87,11 +96,11 @@ int main()
 
         if (status == 0)
         {
-            printf("Client exited successfully\n");
+            printf(GREEN "Client exited successfully\n" RESET);
         }
         else
         {
-            printf("Client exited with error\n");
+            printf(RED "Client exited with error\n" RESET);
         }
     }
 }

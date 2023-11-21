@@ -17,8 +17,6 @@ void deletefilenm(char *path, int client_socket_nm)
         add_to_cache(path, ans);
     }
 
-
-
     if(ans.ss_port==-1)
     {
         int status = FILE_NOT_FOUND;
@@ -73,10 +71,11 @@ void deletefilenm(char *path, int client_socket_nm)
     if (status == SUCCESS)
     {
         delete_from_trie(path);
+        printf(GREEN "File deleted successfully\n" RESET);
     }
     else
     {
-        printf("Error in deleting file\n");
+        printf(RED "Error in deleting file\n" RESET);
     }
 
     if (send(client_socket_nm, &status, sizeof(status), 0) == -1)

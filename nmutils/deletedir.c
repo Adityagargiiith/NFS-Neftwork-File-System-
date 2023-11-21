@@ -19,6 +19,7 @@ void deletedirnm(char* path, int client_socket_nm)
     if(ans.ss_port==-1)
     {
         int status = DIR_NOT_FOUND;
+        printf(YELLOW "Directory not found in deletedir\n" RESET);
         if (send(client_socket_nm, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -68,13 +69,12 @@ void deletedirnm(char* path, int client_socket_nm)
     close(sock_ss);
     if (status == SUCCESS)
     {
-        printf("Yaha\n");
         delete_from_trie(path);
-        printf("Here11\n");
+        printf(GREEN "Directory deleted successfully\n" RESET);
     }
     else
     {
-        printf("Error in deleting directory\n");
+        printf(RED "Error in deleting directory\n" RESET);
     }
 
     if (send(client_socket_nm, &status, sizeof(status), 0) == -1)

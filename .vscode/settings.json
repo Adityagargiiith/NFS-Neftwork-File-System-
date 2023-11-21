@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "*.c": "c",
         "client.h": "c",
         "unistd.h": "c",
         "errorcode.h": "c",
@@ -13,6 +14,7 @@
         "backup.h": "c",
         "copyfile.h": "c",
         "copydir.h": "c",
-        "write.h": "c"
+        "write.h": "c",
+        "info.h": "c"
     }
 }

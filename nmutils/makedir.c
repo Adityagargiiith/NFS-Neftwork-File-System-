@@ -26,6 +26,7 @@ int makedirnm(char *name_of_dir, char *path, int client_socket)
     if (ans.ss_port == -1)
     {
         int status = INVALID_PATH;
+        printf(YELLOW "Directory not found in makedir\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -37,6 +38,7 @@ int makedirnm(char *name_of_dir, char *path, int client_socket)
     if (ans.dir_or_file == IS_FILE)
     {
         int status = INVALID_PATH;
+        printf(YELLOW "Path is a file in makedir\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -58,6 +60,7 @@ int makedirnm(char *name_of_dir, char *path, int client_socket)
     if (curr_ss_num == -1)
     {
         int status = INVALID_PATH;
+        printf(YELLOW "Directory not found in makedir\n" RESET);
         if (send(client_socket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");
@@ -76,6 +79,7 @@ int makedirnm(char *name_of_dir, char *path, int client_socket)
             if (failure[backup_arr[curr_ss_num].replica2_ss_index] == 1)
             {
                 int status = SS_DOWN;
+                printf(YELLOW "Directory not found in makedir\n" RESET);
                 if (send(client_socket, &status, sizeof(status), 0) == -1)
                 {
                     perror("Error in send() function call: ");
@@ -150,10 +154,11 @@ int makedirnm(char *name_of_dir, char *path, int client_socket)
     if (status == SUCCESS)
     {
         insert_into_tree_new(new_path, 1, copy.ss_ip, copy.ss_port, copy.client_port, copy.s2s_port, 1);
+        printf(GREEN "Directory created successfully\n" RESET);
     }
     else
     {
-        printf("Error in making directory\n");
+        printf(RED "Error in creating directory\n" RESET);
     }
 
     if (send(client_socket, &status, sizeof(status), 0) == -1)
@@ -162,6 +167,6 @@ int makedirnm(char *name_of_dir, char *path, int client_socket)
         return -1;
     }
 
-    print_tree(root);
+    // print_tree(root);
     return status;
 }

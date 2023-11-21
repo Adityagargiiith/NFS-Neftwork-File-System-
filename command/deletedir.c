@@ -11,14 +11,14 @@ void deletedir(char *input)
     char *dirname = strtok(NULL, " ");
     if (dirname == NULL)
     {
-        printf("Usage: deletedir <dirname(with path)> \n");
+        printf(MAGENTA "Usage: deletedir <dirname(with path)>\n" RESET);
         return;
     }
 
     char *token = strtok(NULL, " ");
     if (token != NULL)
     {
-        printf("Usage: deletedir <dirname(with path)> \n");
+        printf(MAGENTA "Usage: deletedir <dirname(with path)>\n" RESET);
         return;
     }
 
@@ -26,7 +26,7 @@ void deletedir(char *input)
 
     if (sockfd < 0)
     {
-        printf("Error in creating socket\n");
+        printf(RED "Error in creating socket\n" RESET);
         return;
     }
 
@@ -41,7 +41,7 @@ void deletedir(char *input)
 
     if (ret < 0)
     {
-        printf("Error in connecting to naming server\n");
+        printf(RED "Error in connecting to naming server\n" RESET);
         return;
     }
 
@@ -54,40 +54,40 @@ void deletedir(char *input)
 
     if (send(sockfd, msg, strlen(msg), 0) < 0)
     {
-        printf("Error in sending data to naming server\n");
+        printf(RED "Error in sending data to naming server\n" RESET);
         return;
     }
 
     int status;
     if (recv(sockfd, &status, sizeof(status), 0) < 0)
     {
-        printf("Error in receiving data from naming server\n");
+        printf(RED "Error in receiving data from naming server\n" RESET);
         return;
     }
 
     if (status == SUCCESS)
     {
-        printf("Directory deleted successfully\n");
+        printf(GREEN "Directory deleted successfully\n" RESET);
     }
     else if (status == DIR_NOT_FOUND)
     {
-        printf("Directory not found\n");
+        printf(RED "Directory not found\n" RESET);
     }
     else if (status == PERMISSION_DENIED)
     {
-        printf("Permission Denied\n");
+        printf(RED "Permission Denied\n" RESET);
     }
     else if (status == INVALID_PATH)
     {
-        printf("Invalid Path\n");
+        printf(RED "Invalid Path\n" RESET);
     }
     else if (status == INVALID_DIRNAME)
     {
-        printf("Invalid Directory Name\n");
+        printf(RED "Invalid Directory Name\n" RESET);
     }
     else
     {
-        printf("Unknown Error occured while deleting directory\n");
+        printf(RED "Error in deleting directory\n" RESET);
     }
 
     close(sockfd);

@@ -3,7 +3,6 @@
 
 // 1 for dir and 2 for file
 struct tree_node *root;
-FILE *log_file;
 
 int failure[100000];
 struct data_of_ss initial_data[100];
@@ -207,8 +206,6 @@ void *checkalive(void *arg)
         perror("Error in accept() function call: ");
         exit(1);
     }
-
-    printf("Storage server Alive\n");
     sem_post(&sem[ss_number + 1]);
 
     int prev_failure = 0;
@@ -228,7 +225,7 @@ void *checkalive(void *arg)
             {
                 if (prev_failure == 0)
                 {
-                    printf("Storage server with ip %s and port %d is dead\n", initial_data[ss_number].ip, initial_data[ss_number].port_number);
+                    printf(RED "Storage server with ip %s and port %d is dead\n" RESET, initial_data[ss_number].ip, initial_data[ss_number].port_number);
                 }
                 failure[ss_number] = 1;
                 prev_failure = 1;
@@ -245,7 +242,7 @@ void *checkalive(void *arg)
         {
             if (prev_failure == 0)
             {
-                printf("Storage server with ip %s and port %d is dead\n", initial_data[ss_number].ip, initial_data[ss_number].port_number);
+                printf(RED "Storage server with ip %s and port %d is dead\n" RESET, initial_data[ss_number].ip, initial_data[ss_number].port_number);
             }
             failure[ss_number] = 1;
             prev_failure = 1;
@@ -264,6 +261,7 @@ void *checkalive(void *arg)
                 }
                 backup_pending[ss_number] = 1;
                 prev_failure = 0;
+                printf(GREEN "Storage server with ip %s and port %d is alive\n" RESET, initial_data[ss_number].ip, initial_data[ss_number].port_number);
             }
         }
         sleep(1);
@@ -301,13 +299,13 @@ void *ss_init_thread(void *)
     }
     while (1)
     {
-        printf("Current number of ss is %d\n", curr_number_of_ss);
-        for (int i = 0; i < curr_number_of_ss; i++)
-        {
-            printf("Original ss index is %d\n", backup_arr[i].original_ss_index);
-            printf("Replica1 ss index is %d\n", backup_arr[i].replica1_ss_index);
-            printf("Replica2 ss index is %d\n", backup_arr[i].replica2_ss_index);
-        }
+        // printf("Current number of ss is %d\n", curr_number_of_ss);
+        // for (int i = 0; i < curr_number_of_ss; i++)
+        // {
+        //     printf("Original ss index is %d\n", backup_arr[i].original_ss_index);
+        //     printf("Replica1 ss index is %d\n", backup_arr[i].replica1_ss_index);
+        //     printf("Replica2 ss index is %d\n", backup_arr[i].replica2_ss_index);
+        // }
 
         pthread_t ss_checkalive;
         int arg1 = curr_number_of_ss;
@@ -322,7 +320,8 @@ void *ss_init_thread(void *)
             perror("Error in accept() function call: ");
             exit(1);
         }
-        printf("Storage server connected\n");
+
+        printf(BLUE "[NAMING SERVER] Received a connection from a storage server with ip %s and port %d\n" RESET, inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
 
         struct data_of_ss initial_data_of_ss;
         memset(&initial_data_of_ss, 0, sizeof(initial_data_of_ss));
@@ -449,9 +448,9 @@ void *client_req_handler(void *arg)
         perror("Error in recv() function call: ");
         exit(1);
     }
+    msg[strlen(msg)] = '\0';
+    printf(CYAN "[CLIENT] Received a request from a client : %s\n" RESET, msg);
     char *token = strtok(msg, " ");
-    fprintf(log_file, "Received a request from client: %s\n", msg);
-    fflush(log_file); // Make sure the log message is immediately written to the file
 
     if (strcmp(token, "makedir") == 0)
     {
@@ -587,7 +586,6 @@ void *client_req_handler(void *arg)
             strcpy(new_path, dest);
             // strcat(new_path,"/");
             strcat(new_path, file_name);
-            printf("New path is %s\n", new_path);
             new_path[strlen(new_path)] = '\0';
             strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path, new_path);
             initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file = 0;
@@ -660,21 +658,16 @@ void *client_req_handler(void *arg)
     }
     else if (strcmp(token, "read") == 0)
     {
-        /* code */
-        // printf("Here for read\n");
         char *filename = strtok(NULL, " ");
-        printf("Filename is %s\n", filename);
         readnm(filename, client_socket);
     }
     else if (strcmp(token, "write") == 0)
     {
         /* code */
         char *filename = strtok(NULL, " ");
-        printf("Filename is %s\n", filename);
         int res = writenm(filename, client_socket);
         if (res == SUCCESS)
         {
-            printf("Success\n");
             for (int ss_number = 0; ss_number < curr_number_of_ss; ss_number++)
             {
                 for (int path_index = 0; path_index < initial_data[ss_number].number_of_paths; path_index++)
@@ -708,6 +701,33 @@ void *client_req_handler(void *arg)
             }
         }
     }
+    else if (strcmp(token, "list") == 0)
+    {
+        int total_number_of_paths = 0;
+        int n_ss = curr_number_of_ss;
+        for (int i = 0; i < n_ss; i++)
+        {
+            total_number_of_paths += initial_data[i].number_of_paths;
+        }
+        char *paths_arr[total_number_of_paths];
+        int index = 0;
+        for (int i = 0; i < n_ss; i++)
+        {
+            for (int j = 0; j < initial_data[i].number_of_paths; j++)
+            {
+                if (index == total_number_of_paths)
+                {
+                    break;
+                }
+                paths_arr[index] = (char *)malloc(sizeof(char) * 100);
+                strcpy(paths_arr[index], initial_data[i].paths[j].path);
+                paths_arr[index][strlen(paths_arr[index])] = '\0';
+                printf("Path is %s\n", paths_arr[index]);
+                index++;
+            }
+        }
+        listnm(client_socket, total_number_of_paths, paths_arr);
+    }
 
     close(client_socket);
     return NULL;
@@ -725,7 +745,6 @@ void *client_thread(void *)
     struct sockaddr_in server_address;
     memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET;
-
     server_address.sin_port = htons(CLIENT_PORT);
     server_address.sin_addr.s_addr = inet_addr(IP);
 
@@ -807,7 +826,6 @@ int main()
         backup_arr[i].number_of_references = 0;
     }
 
-    log_file = fopen("naming_server.log", "a");
     pthread_t ss_init_thread_id;
     pthread_create(&ss_init_thread_id, NULL, ss_init_thread, NULL);
     pthread_t client_thread_id;
@@ -816,6 +834,5 @@ int main()
     pthread_create(&ss_backup_update_thread_id, NULL, ss_backup_update, NULL);
     pthread_join(client_thread_id, NULL);
     pthread_join(ss_init_thread_id, NULL);
-    fclose(log_file);
     return 0;
 }
