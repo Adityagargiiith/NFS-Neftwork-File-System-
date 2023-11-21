@@ -1,10 +1,13 @@
 #include "copydir.h"
+extern struct my_struct *curr_files;
+extern char home_dir[500];
 
 void rec_file(int server_fd)
 {
     char file_name[100];
     memset(file_name, 0, sizeof(file_name));
     read(server_fd, file_name, sizeof(file_name));
+    // printf("File name recieved is %s\n", file_name);
     // int file_fd = open(file_name, O_RDONLY);
     // create
     int file_fd = open(file_name, O_RDONLY | O_WRONLY | O_CREAT | O_TRUNC, 0666);
@@ -46,6 +49,47 @@ void rec_file(int server_fd)
         write(file_fd, new_buffer, number_of_bytes_recieved_now);
         number_of_bytes_recieved += number_of_bytes_recieved_now;
     }
+    char *relative_path = (char *)malloc(sizeof(char) * 500);
+    memset(relative_path, 0, sizeof(relative_path));
+    strcpy(relative_path, home_dir);
+    strcat(relative_path, "/");
+    strcat(relative_path, file_name);
+    relative_path = strstr(relative_path, home_dir);
+    relative_path[strlen(relative_path)] = '\0';
+    // printf("relative_path: %s\n", relative_path);
+    int index_of_dot = -1;
+    for (int i = 0; i < strlen(relative_path); i++)
+    {
+        if (relative_path[i] == '.')
+        {
+            index_of_dot = i;
+            break;
+        }
+    }
+    char *path = (char *)malloc(sizeof(char) * 500);
+    memset(path, 0, sizeof(path));
+    for (int i = index_of_dot + 1; i < strlen(relative_path); i++)
+    {
+        path[i - index_of_dot - 1] = relative_path[i];
+    }
+    path[strlen(path)] = '\0';
+    // printf("path: %s\n", path);
+
+    struct my_struct *s;
+    HASH_FIND_STR(curr_files, path, s);
+    if (s != NULL)
+    {
+        s->being_written = 0;
+    }
+    else
+    {
+        s = (struct my_struct *)malloc(sizeof(struct my_struct));
+        strcpy(s->name, path);
+        s->being_written = 0;
+        pthread_mutex_init(&(s->mutex), NULL);
+        HASH_ADD_STR(curr_files, name, s);
+    }
+    // printf("File recieved\n");
 }
 
 void rec_dir(int server_fd)
@@ -319,14 +363,13 @@ void copydirss(char *src, ss_info *ss_to_send, int client_socket_nm, int s2s_con
         return;
     }
 
-    //use SO_REUSEADDR
+    // use SO_REUSEADDR
     int opt = 1;
     if (setsockopt(sock_ss, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
     {
         perror("Error in setsockopt() function call: ");
         return;
     }
-
 
     struct sockaddr_in server_address_ss;
     memset(&server_address_ss, 0, sizeof(server_address_ss));
@@ -361,7 +404,7 @@ void copydirss(char *src, ss_info *ss_to_send, int client_socket_nm, int s2s_con
         close(sock_ss);
         return;
     }
-    
+
     char temp2[100];
     memset(temp2, 0, sizeof(temp2));
     strcpy(temp2, ".");
@@ -463,11 +506,41 @@ void copysamefcn(char *src, char *dest)
             {
                 fputc(ch, fp2);
             }
+            printf("%s \n", new_src);
+            printf("%s \n", new_dest);
+            char *temp_dest = (char *)malloc(sizeof(char) * (strlen(new_dest) + 10));
+            int curr_index = 0;
+            while (new_dest[curr_index] == home_dir[curr_index])
+            {
+                // temp_dest[curr_index] = new_dest[curr_index];
+                curr_index++;
+            }
+            // temp_dest[curr_index] = '\0';
+            for (int i = curr_index; i < strlen(new_dest); i++)
+            {
+                /* code */
+                temp_dest[i - curr_index] = new_dest[i];
+            }
+            temp_dest[strlen(temp_dest)] = '\0';
+            printf("temp_dest: %s\n", temp_dest);
+            struct my_struct *s;
+            HASH_FIND_STR(curr_files, temp_dest, s);
+            if (s != NULL)
+            {
+                s->being_written = 0;
+            }
+            else
+            {
+                s = (struct my_struct *)malloc(sizeof(struct my_struct));
+                strcpy(s->name, temp_dest);
+                s->being_written = 0;
+                pthread_mutex_init(&(s->mutex), NULL);
+                HASH_ADD_STR(curr_files, name, s);
+            }
             fclose(fp1);
             fclose(fp2);
         }
     }
-
     closedir(dir);
 
     return;

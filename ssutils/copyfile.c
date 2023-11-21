@@ -1,5 +1,5 @@
 #include "copyfile.h"
-
+extern struct my_struct *curr_files;
 void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
 {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -27,7 +27,7 @@ void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
     strcat(temp_path, dest);
     temp_path[strlen(temp_path)] = '\0';
 
-    //store the current directory
+    // store the current directory
     char current_directory[100];
     getcwd(current_directory, sizeof(current_directory));
 
@@ -38,7 +38,6 @@ void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
         close(server_fd);
         return;
     }
-
 
     char file_name[100];
     read(server_fd, file_name, sizeof(file_name));
@@ -68,7 +67,7 @@ void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
 
     printf("File recieved\n");
 
-    //change back to the original directory
+    // change back to the original directory
     status = chdir(current_directory);
     if (status < 0)
     {
@@ -76,7 +75,41 @@ void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
         close(server_fd);
         return;
     }
-
+    char *new_file_path = (char *)malloc(sizeof(char) * (strlen(temp_path) + strlen(file_name) + 20));
+    int curr_index = 0;
+    for (curr_index = 1; curr_index < strlen(temp_path); curr_index++)
+    {
+        new_file_path[curr_index - 1] = temp_path[curr_index];
+    }
+    curr_index--;
+    if (new_file_path[curr_index - 1] != '/')
+    {
+        new_file_path[curr_index] = '/';
+        curr_index++;
+    }
+    // new_file_path[curr_index] = '/';
+    // curr_index++;
+    for (int i = 0; i < strlen(file_name); i++)
+    {
+        new_file_path[curr_index] = file_name[i];
+        curr_index++;
+    }
+    new_file_path[strlen(new_file_path)] = '\0';
+    printf("new_file_path11: %s\n", new_file_path);
+    struct my_struct *s;
+    // HASH_FIND_STR(curr_files, new_file_path, s);
+    // if (s != NULL)
+    // {
+    //     s->being_written = 0;
+    // }
+    // else
+    {
+        s = (struct my_struct *)malloc(sizeof(struct my_struct));
+        strcpy(s->name, new_file_path);
+        s->being_written = 0;
+        pthread_mutex_init(&(s->mutex), NULL);
+        HASH_ADD_STR(curr_files, name, s);
+    }
     int status1 = SUCCESS;
     if (send(client_socket_nm, &status1, sizeof(status1), 0) == -1)
     {
@@ -87,7 +120,7 @@ void copyfilereceive(char *dest, ss_info *ss_to_receive, int client_socket_nm)
     return;
 }
 
-void copyfiless(char *src, ss_info *ss_to_send, int client_socket_nm,int s2s_port)
+void copyfiless(char *src, ss_info *ss_to_send, int client_socket_nm, int s2s_port)
 {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0)
@@ -96,14 +129,13 @@ void copyfiless(char *src, ss_info *ss_to_send, int client_socket_nm,int s2s_por
         return;
     }
 
-    //use SO_REUSEADDR
+    // use SO_REUSEADDR
     int opt = 1;
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
     {
         printf("Error in setsockopt\n");
         return;
     }
-
 
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
@@ -201,41 +233,40 @@ void copyfiless(char *src, ss_info *ss_to_send, int client_socket_nm,int s2s_por
 
     printf("sending done\n");
 
-    int status=SUCCESS;
+    int status = SUCCESS;
     if (send(client_socket_nm, &status, sizeof(status), 0) == -1)
     {
         perror("Error in send() function call: ");
         return;
     }
-    
+
     close(server_fd);
     return;
 }
 
 void copyfiless_same(char *src, char *dest, int client_socket_nm, int s2s_port)
 {
+    printf("IDHAR HU MEIN\n");
     char *temp_src = (char *)malloc(sizeof(char) * 100);
     strcpy(temp_src, ".");
     strcat(temp_src, src);
     temp_src[strlen(temp_src)] = '\0';
 
-    char* temp_token = (char*)malloc(sizeof(char)*100);
-    strcpy(temp_token,src);
-    temp_token[strlen(temp_token)]='\0';
+    char *temp_token = (char *)malloc(sizeof(char) * 100);
+    strcpy(temp_token, src);
+    temp_token[strlen(temp_token)] = '\0';
 
     char *filename = (char *)malloc(sizeof(char) * 100);
 
-
-    char* token = strtok(temp_token,"/");
-    while(token!=NULL)
+    char *token = strtok(temp_token, "/");
+    while (token != NULL)
     {
-        memset(filename,0,sizeof(filename));
-        strcpy(filename,token);
-        filename[strlen(filename)]='\0';
+        memset(filename, 0, sizeof(filename));
+        strcpy(filename, token);
+        filename[strlen(filename)] = '\0';
 
-        token = strtok(NULL,"/");
+        token = strtok(NULL, "/");
     }
-    
 
     char *temp_dest = (char *)malloc(sizeof(char) * 100);
     strcpy(temp_dest, ".");
@@ -273,11 +304,35 @@ void copyfiless_same(char *src, char *dest, int client_socket_nm, int s2s_port)
     }
 
     int status = SUCCESS;
+    char *temp_path_new = (char *)malloc(sizeof(char) * (strlen(temp_dest) + strlen(filename) + 10));
+    int curr_index = 0;
+    for (curr_index = 1; curr_index < strlen(temp_dest); curr_index++)
+    {
+        temp_path_new[curr_index - 1] = temp_dest[curr_index];
+    }
+    curr_index--;
+    temp_path_new[strlen(temp_path_new)] = '\0';
+    printf("temp_path_new: %s\n", temp_path_new);
+    struct my_struct *s;
+    HASH_FIND_STR(curr_files, temp_path_new, s);
+    if (s != NULL)
+    {
+        s->being_written = 0;
+    }
+    else
+    {
+        s = (struct my_struct *)malloc(sizeof(struct my_struct));
+        strcpy(s->name, temp_path_new);
+        s->name[strlen(s->name)] = '\0';
+        s->being_written = 0;
+        pthread_mutex_init(&(s->mutex), NULL);
+        HASH_ADD_STR(curr_files, name, s);
+    }
+
     if (send(client_socket_nm, &status, sizeof(status), 0) == -1)
     {
         perror("Error in send() function call: ");
         return;
     }
     return;
-
 }
