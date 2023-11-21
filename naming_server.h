@@ -26,6 +26,7 @@
 #include "nmutils/write.h"
 #include "nmutils/backup.h"
 #include "nmutils/lru.h"
+#include "nmutils/list.h"
 
 #define CLIENT_PORT 51234
 #define SS_PORT 5572
@@ -47,6 +48,13 @@ struct replica_info
     int number_of_references;
 };
 
+#define RED "\033[1;31m"
+#define GREEN "\033[1;32m"
+#define YELLOW "\033[1;33m"
+#define BLUE "\033[1;34m"
+#define MAGENTA "\033[1;35m"
+#define CYAN "\033[1;36m"
+#define RESET "\033[0m"
 // int backupdir(ss_info sender_info1, ss_info receiver_info1, char *dir_path);
 // int backup_file(ss_info sender_info1, ss_info reciever_info1, char *file_path);
 
