@@ -18,5 +18,6 @@
 #define DEST_IS_DIR 115 // Destination is a directory
 #define SRC_IS_FILE 116 // Source is a file
 #define DEST_IS_FILE 117 // Destination is a file
+#define SS_DOWN 118 // Storage Server is down
 
 #endif

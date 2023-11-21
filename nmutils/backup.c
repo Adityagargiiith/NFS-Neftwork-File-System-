@@ -1,6 +1,7 @@
 #include "backup.h"
 
-int backupdir(ss_new sender_info1,ss_new receiver_info1,char *dir_path)
+
+int backupdir(ss_info sender_info1,ss_info receiver_info1,char *dir_path)
 {
     ss_info sender_info,receiver_info;
     sender_info.ss_port=sender_info1.ss_port;
@@ -68,6 +69,7 @@ int backupdir(ss_new sender_info1,ss_new receiver_info1,char *dir_path)
     char *msg_to_ss1=(char*)malloc(sizeof(char)*100);
     strcpy(msg_to_ss1,"copydir dest ");
     strcat(msg_to_ss1,dir_path);
+    printf("msg_to_ss1: %s\n",msg_to_ss1);
     // strcat(msg_to_ss1,"/..");
     int i=strlen(msg_to_ss1)-1;
     while(msg_to_ss1[i]!='/')
@@ -88,8 +90,10 @@ int backupdir(ss_new sender_info1,ss_new receiver_info1,char *dir_path)
     // }
     
     // new_to_send[j]='\0';
+
     msg_to_ss1[i+1]='\0';
     
+    printf("msg_to_ss1: %s\n",msg_to_ss1);
     // msg_to_ss1[strlen(msg_to_ss1)]='\0';
     if(send(sock_ss1,msg_to_ss1,strlen(msg_to_ss1),0)==-1)
     {
@@ -120,7 +124,7 @@ int backupdir(ss_new sender_info1,ss_new receiver_info1,char *dir_path)
     return 0;
 }
 
-int backup_file(ss_new sender_info1,ss_new reciever_info1,char *file_path)
+int backup_file(ss_info sender_info1,ss_info reciever_info1,char *file_path)
 {
     ss_info sender_info,reciever_info;
     sender_info.ss_port=sender_info1.ss_port;
@@ -190,12 +194,14 @@ int backup_file(ss_new sender_info1,ss_new reciever_info1,char *file_path)
     strcpy(msg_to_ss1,"copyfile dest ");
     strcat(msg_to_ss1,file_path);
     // strcat(msg_to_ss1,"/..");
+    printf("msg_to_ss1: %s\n",msg_to_ss1);
     int i=strlen(msg_to_ss1)-1;
     while(msg_to_ss1[i]!='/')
     {
         i--;
     }
-    msg_to_ss1[i]='\0';
+    msg_to_ss1[i+1]='\0';
+    printf("msg_to_ss1: %s\n",msg_to_ss1);
     // msg_to_ss1[strlen(msg_to_ss1)]='\0';
     if(send(sock_ss1,msg_to_ss1,strlen(msg_to_ss1),0)==-1)
     {

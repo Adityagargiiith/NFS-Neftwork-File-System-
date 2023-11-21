@@ -29,12 +29,16 @@
 #define NM_CONN_IP "127.0.0.1"
 #define SS_IP "127.0.0.1"
 
+#define CHECK_ALIVE_PORT 5575
+
+
 struct details_of_path
 {
     char path[400];
     int permissions;
     int dir_or_file;
-    int backup_pending;
+    int backup_pending[2];
+    int recovery_pending[2];
 };
 
 struct data_of_ss

@@ -41,5 +41,10 @@ ss_info search_path_in_trie(char *path);
 void print_tree(struct tree_node *curr);
 int delete_from_trie(char *path);
 void delete_subtree(struct tree_node *curr);
+
+int backupdir(ss_info sender_info1, ss_info receiver_info1, char *dir_path);
+int backup_file(ss_info sender_info1, ss_info reciever_info1, char *file_path);
+
+
 extern struct tree_node *root;
 #endif

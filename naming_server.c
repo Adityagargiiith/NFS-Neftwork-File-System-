@@ -8,49 +8,49 @@ FILE *log_file;
 int failure[100000];
 struct data_of_ss initial_data[100];
 int backup_pending[1000];
+int recovery_pending[1000];
 int curr_number_of_ss;
-struct replica_info
-{
-    int original_ss_index;
-    char original_ss_ip[20];
-    int original_ss_port;
-    int replica1_ss_index;
-    int replica2_ss_index;
-    int replica1_ss_port;
-    int replica2_ss_port;
-    char replica1_ss_ip[20];
-    char replica2_ss_ip[20];
-    int number_of_references;
-};
 
 struct replica_info backup_arr[100];
+
+struct arg_struct
+{
+    int client_socket;
+    int ss_number;
+};
 
 pthread_mutex_t mutex;
 
 void *ss_backup_update(void *)
 {
-    printf("Here\n");
     pthread_detach(pthread_self());
     // int ss_number = *((int *)arg);
     while (1)
     {
         for (int ss_number = 0; ss_number < 100; ss_number++)
         {
-            if (backup_pending[ss_number] == 1)
+            if (backup_pending[ss_number] == 1 && failure[ss_number] == 0)
             {
+                // int ss_success = 1;
+                int ss_success_count = 0;
+                int ctr = 0;
                 // pthread_mutex_lock(&mutex);
-                printf("Reached by %d\n", ss_number);
-                usleep(5000000);
+                // usleep(5000000);
                 for (int i = 0; i < initial_data[ss_number].number_of_paths; i++)
                 {
-                    if (initial_data[ss_number].paths[i].backup_pending == 0)
+
+                    if (initial_data[ss_number].paths[i].backup_pending[0] == 0 && initial_data[ss_number].paths[i].backup_pending[1] == 0)
                     {
-                        /* code */
                         continue;
                     }
-                    if (backup_arr[ss_number].replica1_ss_index != -1)
+                    else
                     {
-                        ss_new sender, receiver;
+                        ctr++;
+                    }
+                    if (backup_arr[ss_number].replica1_ss_index != -1 && initial_data[ss_number].paths[i].backup_pending[0] == 1)
+                    {
+
+                        ss_info sender, receiver;
                         sender.ss_port = initial_data[ss_number].port_number;
                         sender.s2s_port = initial_data[ss_number].s2s_port;
                         sender.dir_or_file = 1;
@@ -72,11 +72,12 @@ void *ss_backup_update(void *)
                             /* code */
                             backup_file(sender, receiver, initial_data[ss_number].paths[i].path);
                         }
-                        backup_pending[ss_number] = 0;
+                        initial_data[ss_number].paths[i].backup_pending[0] = 0;
                     }
-                    if (backup_arr[ss_number].replica2_ss_index != -1)
+
+                    if (backup_arr[ss_number].replica2_ss_index != -1 && initial_data[ss_number].paths[i].backup_pending[1] == 1)
                     {
-                        ss_new sender, receiver;
+                        ss_info sender, receiver;
                         sender.ss_port = initial_data[ss_number].port_number;
                         sender.s2s_port = initial_data[ss_number].s2s_port;
                         sender.dir_or_file = 1;
@@ -98,14 +99,161 @@ void *ss_backup_update(void *)
                             /* code */
                             backup_file(sender, receiver, initial_data[ss_number].paths[i].path);
                         }
-                        backup_pending[ss_number] = 0;
+                        initial_data[ss_number].paths[i].backup_pending[1] = 0;
                     }
                 }
-                printf("Done by %d\n", ss_number);
-                // pthread_mutex_unlock(&mutex);
+                if (ctr == 0)
+                {
+                    backup_pending[ss_number] = 0;
+                }
+            }
+
+            if (recovery_pending[ss_number] == 1 && failure[ss_number] == 0)
+            {
+                int ctr2 = 0;
+                for (int i = 0; i < initial_data[ss_number].number_of_paths; i++)
+                {
+                    if (initial_data[ss_number].paths[i].recovery_pending[0] == 0 && initial_data[ss_number].paths[i].recovery_pending[1] == 0)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        ctr2++;
+                    }
+
+                    if (initial_data[ss_number].paths[i].recovery_pending[0] == 1)
+                    {
+                        ss_info sender, receiver;
+                        int recv_idx = backup_arr[ss_number].replica1_ss_index;
+                        sender.ss_port = initial_data[recv_idx].port_number;
+                        sender.s2s_port = initial_data[recv_idx].s2s_port;
+                        sender.dir_or_file = 1;
+                        strcpy(sender.ss_ip, initial_data[recv_idx].ip);
+                        sender.ss_ip[strlen(sender.ss_ip)] = '\0';
+                        int index1 = ss_number;
+                        receiver.ss_port = initial_data[index1].port_number;
+                        receiver.s2s_port = initial_data[index1].s2s_port;
+                        receiver.dir_or_file = 1;
+                        strcpy(receiver.ss_ip, initial_data[index1].ip);
+                        receiver.ss_ip[strlen(receiver.ss_ip)] = '\0';
+                        if (initial_data[ss_number].paths[i].dir_or_file == 1)
+                        {
+                            backupdir(sender, receiver, initial_data[ss_number].paths[i].path);
+                        }
+                        else if (initial_data[ss_number].paths[i].dir_or_file == 0)
+                        {
+                            backup_file(sender, receiver, initial_data[ss_number].paths[i].path);
+                        }
+
+                        initial_data[ss_number].paths[i].recovery_pending[0] = 0;
+                        backup_pending[ss_number] = 1;
+                        initial_data[ss_number].paths[i].backup_pending[1] = 1;
+                    }
+
+                    if (initial_data[ss_number].paths[i].recovery_pending[1] == 1)
+                    {
+                        ss_info sender, receiver;
+                        int recv_idx = backup_arr[ss_number].replica2_ss_index;
+                        sender.ss_port = initial_data[recv_idx].port_number;
+                        sender.s2s_port = initial_data[recv_idx].s2s_port;
+                        sender.dir_or_file = 1;
+                        strcpy(sender.ss_ip, initial_data[recv_idx].ip);
+                        sender.ss_ip[strlen(sender.ss_ip)] = '\0';
+                        int index1 = ss_number;
+                        receiver.ss_port = initial_data[index1].port_number;
+                        receiver.s2s_port = initial_data[index1].s2s_port;
+                        receiver.dir_or_file = 1;
+                        strcpy(receiver.ss_ip, initial_data[index1].ip);
+                        receiver.ss_ip[strlen(receiver.ss_ip)] = '\0';
+                        if (initial_data[ss_number].paths[i].dir_or_file == 1)
+                        {
+                            backupdir(sender, receiver, initial_data[ss_number].paths[i].path);
+                        }
+                        else if (initial_data[ss_number].paths[i].dir_or_file == 0)
+                        {
+                            backup_file(sender, receiver, initial_data[ss_number].paths[i].path);
+                        }
+                        initial_data[ss_number].paths[i].recovery_pending[1] = 0;
+                        backup_pending[ss_number] = 1;
+                        initial_data[ss_number].paths[i].backup_pending[0] = 1;
+                    }
+                }
+                if (ctr2 == 0)
+                {
+                    recovery_pending[ss_number] = 0;
+                }
             }
         }
     }
+}
+
+int alive_socket;
+
+void *checkalive(void *arg)
+{
+    pthread_detach(pthread_self());
+    int ss_number = *((int *)arg);
+    int client_socket;
+    struct sockaddr_in client_address;
+    int client_address_length = sizeof(client_address);
+    client_socket = accept(alive_socket, (struct sockaddr *)&client_address, &client_address_length);
+    if (client_socket == -1)
+    {
+        perror("Error in accept() function call: ");
+        exit(1);
+    }
+
+    printf("Storage server Alive\n");
+
+    int prev_failure = 0;
+
+    while (1)
+    {
+        char *msg = (char *)malloc(sizeof(char) * 100);
+        memset(msg, 0, 100);
+        struct timeval timeout;
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+        setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
+        int recv_success = recv(client_socket, msg, 100, 0);
+        if (recv_success == -1)
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                printf("Storage server %d is dead\n", ss_number);
+                failure[ss_number] = 1;
+                prev_failure = 1;
+                sleep(1);
+                continue;
+            }
+            else
+            {
+                perror("Error in recv() function call: ");
+                return NULL;
+            }
+        }
+        else if (recv_success == 0)
+        {
+            printf("Storage server %d is dead\n", ss_number);
+            failure[ss_number] = 1;
+            prev_failure = 1;
+            sleep(1);
+            continue;
+        }
+        else
+        {
+            failure[ss_number] = 0;
+            if (prev_failure == 1)
+            {
+                printf("Storage server %d is alive\n", ss_number);
+                prev_failure = 0;
+            }
+        }
+        sleep(1);
+    }
+
+    return NULL;
 }
 void *ss_init_thread(void *)
 {
@@ -145,6 +293,10 @@ void *ss_init_thread(void *)
             printf("Replica2 ss index is %d\n", backup_arr[i].replica2_ss_index);
         }
 
+        pthread_t ss_checkalive;
+        int arg1 = curr_number_of_ss;
+        pthread_create(&ss_checkalive, NULL, checkalive, (void *)&arg1);
+
         int client_socket;
         struct sockaddr_in client_address;
         int client_address_length = sizeof(client_address);
@@ -155,6 +307,7 @@ void *ss_init_thread(void *)
             exit(1);
         }
         printf("Storage server connected\n");
+
         struct data_of_ss initial_data_of_ss;
         memset(&initial_data_of_ss, 0, sizeof(initial_data_of_ss));
         // recv(client_socket, &initial_data_of_ss, sizeof(initial_data_of_ss), 0);
@@ -180,7 +333,7 @@ void *ss_init_thread(void *)
         {
             // pthread_t ss_backup_update_thread_id;
             int arg1 = curr_number_of_ss;
-            backup_pending[curr_number_of_ss] = 1;
+            // backup_pending[curr_number_of_ss] = 1;
             // pthread_create(&ss_backup_update_thread_id, NULL, ss_backup_update, (void *)(&arg1));
             curr_number_of_ss++;
             continue;
@@ -259,16 +412,13 @@ void *ss_init_thread(void *)
             backup_arr[min2_index].number_of_references++;
         }
         backup_pending[curr_number_of_ss] = 1;
-        // pthread_t ss_backup_update_thread_id;
-        if (curr_number_of_ss==2)
-        {
-            backup_pending[0]=1;
-            backup_pending[1]=1;
-        }
-        
-        int arg1 = curr_number_of_ss;
-        // pthread_create(&ss_backup_update_thread_id, NULL, ss_backup_update, (void *)(&arg1));
+
         curr_number_of_ss++;
+        if (curr_number_of_ss == 2)
+        {
+            backup_pending[0] = 1;
+            backup_pending[1] = 1;
+        }
     }
 }
 
@@ -291,35 +441,35 @@ void *client_req_handler(void *arg)
     {
         char *name_of_dir = strtok(NULL, " ");
         char *path = strtok(NULL, " ");
-        int res=makedirnm(name_of_dir, path, client_socket);
-        if (res==SUCCESS)
+        int res = makedirnm(name_of_dir, path, client_socket);
+        if (res == SUCCESS)
         {
             char *parent_path = (char *)malloc(sizeof(char) * 100);
             strcpy(parent_path, path);
             parent_path[strlen(parent_path)] = '\0';
             int ss_number_to_search;
-            for(int ss_number=0;ss_number<curr_number_of_ss;ss_number++)
+            for (int ss_number = 0; ss_number < curr_number_of_ss; ss_number++)
             {
-                if (strcmp(initial_data[ss_number].paths[0].path,parent_path)==0)
+                if (strcmp(initial_data[ss_number].paths[0].path, parent_path) == 0)
                 {
-                    ss_number_to_search=ss_number;
+                    ss_number_to_search = ss_number;
                     break;
                 }
             }
             char new_path[100];
-            strcpy(new_path,parent_path);
-            strcat(new_path,"/");
-            strcat(new_path,name_of_dir);
-            new_path[strlen(new_path)]='\0';
-            int curr_index_to_add=initial_data[ss_number_to_search].number_of_paths;
-            strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path,new_path);
-            initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file=1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].permissions=1;
-            backup_pending[ss_number_to_search]=1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending=1;
+            strcpy(new_path, parent_path);
+            strcat(new_path, "/");
+            strcat(new_path, name_of_dir);
+            new_path[strlen(new_path)] = '\0';
+            int curr_index_to_add = initial_data[ss_number_to_search].number_of_paths;
+            strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path, new_path);
+            initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file = 1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].permissions = 1;
+            backup_pending[ss_number_to_search] = 1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[0] = 1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[1] = 1;
             initial_data[ss_number_to_search].number_of_paths++;
         }
-        
     }
     else if (strcmp(token, "deletedir") == 0)
     {
@@ -330,36 +480,35 @@ void *client_req_handler(void *arg)
     {
         char *filename = strtok(NULL, " ");
         char *path = strtok(NULL, " ");
-        int res=makefilenm(filename, path, client_socket);
-        if (res==SUCCESS)
+        int res = makefilenm(filename, path, client_socket);
+        if (res == SUCCESS)
         {
             char *parent_path = (char *)malloc(sizeof(char) * 100);
             strcpy(parent_path, path);
             parent_path[strlen(parent_path)] = '\0';
             int ss_number_to_search;
-            for(int ss_number=0;ss_number<curr_number_of_ss;ss_number++)
+            for (int ss_number = 0; ss_number < curr_number_of_ss; ss_number++)
             {
-                if (strcmp(initial_data[ss_number].paths[0].path,parent_path)==0)
+                if (strcmp(initial_data[ss_number].paths[0].path, parent_path) == 0)
                 {
-                    ss_number_to_search=ss_number;
+                    ss_number_to_search = ss_number;
                     break;
                 }
             }
             char new_path[100];
-            strcpy(new_path,parent_path);
-            strcat(new_path,"/");
-            strcat(new_path,filename);
-            new_path[strlen(new_path)]='\0';
-            int curr_index_to_add=initial_data[ss_number_to_search].number_of_paths;
-            strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path,new_path);
-            initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file=0;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].permissions=1;
-            backup_pending[ss_number_to_search]=1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending=1;
+            strcpy(new_path, parent_path);
+            strcat(new_path, "/");
+            strcat(new_path, filename);
+            new_path[strlen(new_path)] = '\0';
+            int curr_index_to_add = initial_data[ss_number_to_search].number_of_paths;
+            strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path, new_path);
+            initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file = 0;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].permissions = 1;
+            backup_pending[ss_number_to_search] = 1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[0] = 1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[1] = 1;
             initial_data[ss_number_to_search].number_of_paths++;
-
         }
-        
     }
     else if (strcmp(token, "deletefile") == 0)
     {
@@ -370,60 +519,60 @@ void *client_req_handler(void *arg)
     {
         char *src = strtok(NULL, " ");
         char *dest = strtok(NULL, " ");
-        int res=copyfilenm(src, dest, client_socket);
+        int res = copyfilenm(src, dest, client_socket);
         if (res == SUCCESS)
         {
             int ss_number_to_search;
-            for(int ss_number=0;ss_number<curr_number_of_ss;ss_number++)
+            for (int ss_number = 0; ss_number < curr_number_of_ss; ss_number++)
             {
-                if (strcmp(initial_data[ss_number].paths[0].path,dest)==0)
+                if (strcmp(initial_data[ss_number].paths[0].path, dest) == 0)
                 {
-                    ss_number_to_search=ss_number;
+                    ss_number_to_search = ss_number;
                     break;
                 }
             }
-            int curr_index_to_add=initial_data[ss_number_to_search].number_of_paths;
-            char *file_name=strrchr(src,'/');
-            char *new_path=(char *)malloc(sizeof(char)*100);
-            strcpy(new_path,dest);
+            int curr_index_to_add = initial_data[ss_number_to_search].number_of_paths;
+            char *file_name = strrchr(src, '/');
+            char *new_path = (char *)malloc(sizeof(char) * 100);
+            strcpy(new_path, dest);
             // strcat(new_path,"/");
-            strcat(new_path,file_name);
-            printf("New path is %s\n",new_path);
-            new_path[strlen(new_path)]='\0';
-            strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path,new_path);
-            initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file=0;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].permissions=1;
-            backup_pending[ss_number_to_search]=1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending=1;
+            strcat(new_path, file_name);
+            printf("New path is %s\n", new_path);
+            new_path[strlen(new_path)] = '\0';
+            strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path, new_path);
+            initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file = 0;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].permissions = 1;
+            backup_pending[ss_number_to_search] = 1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[0] = 1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[1] = 1;
             initial_data[ss_number_to_search].number_of_paths++;
         }
-        
     }
     else if (strcmp(token, "copydir") == 0)
     {
         char *src = strtok(NULL, " ");
         char *dest = strtok(NULL, " ");
-        int res=copydirnm(src, dest, client_socket);
-        if (res==SUCCESS)
+        int res = copydirnm(src, dest, client_socket);
+        if (res == SUCCESS)
         {
             int ss_number_to_search;
-            for(int ss_number=0;ss_number<curr_number_of_ss;ss_number++)
+            for (int ss_number = 0; ss_number < curr_number_of_ss; ss_number++)
             {
-                if (strcmp(initial_data[ss_number].paths[0].path,dest)==0)
+                if (strcmp(initial_data[ss_number].paths[0].path, dest) == 0)
                 {
-                    ss_number_to_search=ss_number;
+                    ss_number_to_search = ss_number;
                     break;
                 }
             }
-            int curr_index_to_add=initial_data[ss_number_to_search].number_of_paths;
-            strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path,src);
-            initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file=1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].permissions=1;
-            backup_pending[ss_number_to_search]=1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending=1;
-            initial_data[ss_number_to_search].number_of_paths++; 
+            int curr_index_to_add = initial_data[ss_number_to_search].number_of_paths;
+            strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path, src);
+            initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file = 1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].permissions = 1;
+            backup_pending[ss_number_to_search] = 1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[0] = 1;
+            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[1] = 1;
+            initial_data[ss_number_to_search].number_of_paths++;
         }
-        
     }
     else if (strcmp(token, "read") == 0)
     {
@@ -438,7 +587,7 @@ void *client_req_handler(void *arg)
         /* code */
         char *filename = strtok(NULL, " ");
         printf("Filename is %s\n", filename);
-        int res=writenm(filename, client_socket);
+        int res = writenm(filename, client_socket);
         if (res == SUCCESS)
         {
             printf("Success\n");
@@ -448,14 +597,32 @@ void *client_req_handler(void *arg)
                 {
                     if (strcmp(initial_data[ss_number].paths[path_index].path, filename) == 0)
                     {
-                        backup_pending[ss_number] = 1;
-                        initial_data[ss_number].paths[path_index].backup_pending = 1;
-                        break;
+                        if (failure[ss_number] == 1)
+                        {
+                            recovery_pending[ss_number] = 1;
+                            if (failure[backup_arr[ss_number].replica1_ss_index] == 1)
+                            {
+                                initial_data[ss_number].paths[path_index].recovery_pending[1] = 1;
+                                initial_data[ss_number].paths[path_index].recovery_pending[0] = 0;
+                            }
+                            else
+                            {
+                                initial_data[ss_number].paths[path_index].recovery_pending[0] = 1;
+                                initial_data[ss_number].paths[path_index].recovery_pending[1] = 0;
+                            }
+                            break;
+                        }
+                        else
+                        {
+                            backup_pending[ss_number] = 1;
+                            initial_data[ss_number].paths[path_index].backup_pending[0] = 1;
+                            initial_data[ss_number].paths[path_index].backup_pending[1] = 1;
+                            break;
+                        }
                     }
                 }
             }
         }
-        
     }
 
     close(client_socket);
@@ -464,6 +631,7 @@ void *client_req_handler(void *arg)
 
 void *client_thread(void *)
 {
+
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1)
     {
@@ -509,6 +677,33 @@ void *client_thread(void *)
 
 int main()
 {
+    alive_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (alive_socket == -1)
+    {
+        perror("Error in socket() function call: ");
+        exit(1);
+    }
+
+    struct sockaddr_in alive_server_address;
+    memset(&alive_server_address, 0, sizeof(alive_server_address));
+    alive_server_address.sin_family = AF_INET;
+    alive_server_address.sin_port = htons(CHECK_ALIVE_PORT);
+    alive_server_address.sin_addr.s_addr = inet_addr(IP);
+
+    int alive_bind_success = bind(alive_socket, (struct sockaddr *)&alive_server_address, sizeof(alive_server_address));
+    if (alive_bind_success == -1)
+    {
+        perror("Error in bind() function call: ");
+        exit(1);
+    }
+
+    int alive_listen_success = listen(alive_socket, 20);
+    if (alive_listen_success == -1)
+    {
+        perror("Error in listen() function call: ");
+        exit(1);
+    }
+
     pthread_mutex_init(&mutex, NULL);
     curr_number_of_ss = 0;
     memset(failure, 0, sizeof(failure));

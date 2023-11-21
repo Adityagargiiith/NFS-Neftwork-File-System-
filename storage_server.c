@@ -33,6 +33,42 @@ int nm_conn_port;
 int s2s_conn_port;
 int client_conn_port;
 
+void *check_alive(void *)
+{
+    int alive_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (alive_sock == -1)
+    {
+        perror("Error in socket() function call: ");
+        exit(1);
+    }
+
+    struct sockaddr_in alive_server_address;
+    memset(&alive_server_address, 0, sizeof(alive_server_address));
+    alive_server_address.sin_family = AF_INET;
+    alive_server_address.sin_port = htons(CHECK_ALIVE_PORT);
+    alive_server_address.sin_addr.s_addr = inet_addr(NM_CONN_IP);
+
+    int alive_connect_success = connect(alive_sock, (struct sockaddr *)&alive_server_address, sizeof(alive_server_address));
+    if (alive_connect_success == -1)
+    {
+        perror("Error in connect() function call: ");
+        exit(1);
+    }
+    while (1)
+    {
+        char *msg = (char *)malloc(sizeof(char) * 100);
+        memset(msg, 0, 100);
+        strcpy(msg, "ping");
+        int bytes_sent = send(alive_sock, msg, 100, 0);
+        if (bytes_sent == -1)
+        {
+            perror("Error in send() function call: ");
+            return NULL;
+        }
+        sleep(1);
+    }
+}
+
 void *naming_server_init(void *)
 {
     int sock;
@@ -74,15 +110,16 @@ void *naming_server_init(void *)
         printf("Enter path %d: ", (i + 1));
         scanf("%s", initial_data_of_ss.paths[i].path);
         initial_data_of_ss.paths[i].path[strlen(initial_data_of_ss.paths[i].path)] = '\0';
-        // printf("%s\n", initial_data_of_ss.paths[i].path);
-        // check if it is a file or directory
     }
 
     int current_index = initial_data_of_ss.number_of_paths;
     // printf("Here151\n");
     for (int i = 0; i < initial_data_of_ss.number_of_paths; i++)
     {
-        initial_data_of_ss.paths[i].backup_pending = 1;
+        initial_data_of_ss.paths[i].backup_pending[0] = 1;
+        initial_data_of_ss.paths[i].backup_pending[1] = 1;
+        initial_data_of_ss.paths[i].recovery_pending[0] = 0;
+        initial_data_of_ss.paths[i].recovery_pending[1] = 0;
         struct stat path_stat;
         char path2[100];
         path2[0] = '.';
@@ -125,6 +162,11 @@ void *naming_server_init(void *)
         return NULL;
     }
     printf("Data sent to naming server\n");
+
+    pthread_t tid;
+    pthread_create(&tid, NULL, check_alive, NULL);
+
+    // close(sock);
     return NULL;
 }
 
@@ -150,7 +192,7 @@ void *naming_server_communication(void *)
         exit(1);
     }
 
-    if (listen(socket_nm, 10) == -1)
+    if (listen(socket_nm, 20) == -1)
     {
         perror("Error in listen() function call: ");
         exit(1);
