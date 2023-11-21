@@ -23,6 +23,7 @@
 #include "ssutils/copydir.h"
 #include "ssutils/read.h"
 #include "ssutils/write.h"
+#include "uthash.h"
 
 #define MAX_PATHS 1000
 #define NM_INIT_PORT 5572
@@ -49,6 +50,13 @@ struct data_of_ss
     int client_port;
     struct details_of_path paths[MAX_PATHS];
     char ip[20];
+};
+struct my_struct
+{
+    char name[400];
+    int being_written;
+    pthread_mutex_t mutex;
+    UT_hash_handle hh;
 };
 
 #endif

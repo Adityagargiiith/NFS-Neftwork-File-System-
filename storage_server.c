@@ -1,5 +1,7 @@
 #include "storage_server.h"
 
+struct my_struct *curr_files = NULL;
+char home_dir[500];
 int get_random_port_number()
 {
     int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -151,7 +153,26 @@ void *naming_server_init(void *)
         }
         else
         {
+            struct my_struct *s;    
+            s = (struct my_struct *)malloc(sizeof(struct my_struct));
+            strcpy(s->name, initial_data_of_ss.paths[i].path);
+            s->name[strlen(s->name)] = '\0';
+            s->being_written = 0;
+            pthread_mutex_init(&s->mutex, NULL);
+            HASH_ADD_STR(curr_files, name, s);
             initial_data_of_ss.paths[i].dir_or_file = 0;
+            printf("Added %s to hash table\n", s->name);
+            struct my_struct *s1;
+            HASH_FIND_STR(curr_files, s->name, s1);
+            // if (s1==NULL)
+            // {
+            //     printf("Not added\n");
+            // }
+            // else
+            // {
+            //     printf("Added\n");
+            // }
+            
         }
     }
 
@@ -165,7 +186,11 @@ void *naming_server_init(void *)
 
     pthread_t tid;
     pthread_create(&tid, NULL, check_alive, NULL);
-
+    struct my_struct* s;
+    for(s=curr_files;s!=NULL;s=s->hh.next)
+    {
+        printf("Name: %s\n",s->name);
+    }
     // close(sock);
     return NULL;
 }
@@ -354,6 +379,7 @@ void *client_req_handler(void *arg)
 
 int main()
 {
+    getcwd(home_dir, 500);
     pthread_t thread_id;
     pthread_create(&thread_id, NULL, naming_server_init, NULL);
 
