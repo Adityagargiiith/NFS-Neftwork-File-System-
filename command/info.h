@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <time.h>
+#include "../client.h"
 void info(char *command);
 
 #endif
