@@ -1,16 +1,36 @@
 #include "read.h"
 #include "../storage_server.h"
 
-
 extern int failure[100000];
 extern struct replica_info backup_arr[100];
 extern struct data_of_ss initial_data[100];
 
+extern lru_entry *head;
 
 void readnm(char *path, int client_soket)
 {
-    ss_info ans =search_path_in_trie(path);
-    if (ans.ss_port==-1)
+
+    ss_info cache_ans = find_in_cache(path);
+    ss_info ans;
+
+    if (cache_ans.ss_port != -5)
+    {
+        ans = cache_ans;
+        printf("Found in cache\n");
+        printf("ss_port: %d\n", ans.ss_port);
+        printf("s2s_port: %d\n", ans.s2s_port);
+    }
+    else
+    {
+        ans = search_path_in_trie(path);
+        add_to_cache(path, ans);
+        printf("Not found in cache\n");
+        printf("ss_port: %d\n", ans.ss_port);
+        printf("s2s_port: %d\n", ans.s2s_port);
+
+    }
+
+    if (ans.ss_port == -1)
     {
         int status = FILE_NOT_FOUND;
         if (send(client_soket, &status, sizeof(status), 0) == -1)
@@ -21,17 +41,17 @@ void readnm(char *path, int client_soket)
         return;
     }
     else
-    {   
-        int curr_ss_num=-1;
-        for(int i=0;i<100;i++)
+    {
+        int curr_ss_num = -1;
+        for (int i = 0; i < 100; i++)
         {
-            if(ans.ss_port == backup_arr[i].original_ss_port && strcmp(ans.ss_ip,backup_arr[i].original_ss_ip)==0)
+            if (ans.ss_port == backup_arr[i].original_ss_port && strcmp(ans.ss_ip, backup_arr[i].original_ss_ip) == 0)
             {
-                curr_ss_num=i;
+                curr_ss_num = i;
                 break;
             }
         }
-        if(curr_ss_num==-1)
+        if (curr_ss_num == -1)
         {
             int status = FILE_NOT_FOUND;
             if (send(client_soket, &status, sizeof(status), 0) == -1)
@@ -42,11 +62,11 @@ void readnm(char *path, int client_soket)
             return;
         }
         int temp;
-        if(failure[curr_ss_num]==1)
+        if (failure[curr_ss_num] == 1)
         {
-            if(failure[backup_arr[curr_ss_num].replica1_ss_index]==1)
+            if (failure[backup_arr[curr_ss_num].replica1_ss_index] == 1)
             {
-                if(failure[backup_arr[curr_ss_num].replica2_ss_index]==1)
+                if (failure[backup_arr[curr_ss_num].replica2_ss_index] == 1)
                 {
                     int status = SS_DOWN;
                     if (send(client_soket, &status, sizeof(status), 0) == -1)
@@ -58,26 +78,25 @@ void readnm(char *path, int client_soket)
                 }
                 else
                 {
-                    temp=backup_arr[curr_ss_num].replica2_ss_index;
+                    temp = backup_arr[curr_ss_num].replica2_ss_index;
                 }
             }
             else
             {
-                temp=backup_arr[curr_ss_num].replica1_ss_index;
+                temp = backup_arr[curr_ss_num].replica1_ss_index;
             }
 
-            ans.ss_port=initial_data[temp].port_number;
-            ans.s2s_port=initial_data[temp].s2s_port;
-            ans.client_port=initial_data[temp].client_port;
-            strcpy(ans.ss_ip,initial_data[temp].ip);
+            ans.ss_port = initial_data[temp].port_number;
+            ans.s2s_port = initial_data[temp].s2s_port;
+            ans.client_port = initial_data[temp].client_port;
+            strcpy(ans.ss_ip, initial_data[temp].ip);
         }
         else
         {
-            temp=curr_ss_num;
+            temp = curr_ss_num;
         }
 
-
-        int status=SUCCESS;
+        int status = SUCCESS;
         if (send(client_soket, &status, sizeof(status), 0) == -1)
         {
             perror("Error in send() function call: ");

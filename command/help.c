@@ -21,12 +21,14 @@ void help(char *command)
     printf("1. makedir <dirname> <path> : Create a directory with name <dirname> at <path>\n");
     printf("2. makefile <filename> <path> : Create a file with name <filename> at <path>\n");
     printf("3. read <filename(with path)> : Read the file <filename> from <path>\n");
-    printf("4. write <filename(with path)> <data> : Write <data> to the file <filename> at <path>\n");
+    printf("4. write <filename(with path)> <data>(in quotes) : Write <data> to the file <filename> from <path> (overwrite if already exists)\n");
     printf("5. deletefile <filename(with path)> : Delete the file <filename> from <path>\n");
     printf("6. deletedir <dirname(with path)> : Delete the directory <dirname> from <path>\n");
     printf("7. list : List all the files and directories in the NFS\n");
     printf("8. info <filename(with path)> : Get the information of the file <filename> from <path>\n");
-    printf("9. exit : Exit the NFS\n");
+    printf("9. copydir <src> <dest> : Copy the directory <src> to <dest>\n");
+    printf("10. copyfile <src> <dest> : Copy the file <src> to <dest>\n");
+    printf("11. exit : Exit the client\n");
 
     return;
 }

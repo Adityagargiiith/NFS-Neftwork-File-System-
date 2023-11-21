@@ -4,9 +4,24 @@
 extern int failure[100000];
 extern struct replica_info backup_arr[100];
 extern struct data_of_ss initial_data[100];
+extern lru_entry *head;
+
 int makedirnm(char *name_of_dir, char *path, int client_socket)
 {
-    ss_info ans = search_path_in_trie(path);
+    ss_info ans;
+
+    ss_info cache_ans = find_in_cache(path);
+
+    if (cache_ans.ss_port != -5)
+    {
+        ans = cache_ans;
+    }
+    else
+    {
+        ans = search_path_in_trie(path);
+        add_to_cache(path, ans);
+    }
+
 
     if (ans.ss_port == -1)
     {
@@ -50,6 +65,8 @@ int makedirnm(char *name_of_dir, char *path, int client_socket)
         }
         return -1;
     }
+
+    ss_info copy = ans;
 
     int temp;
     if (failure[curr_ss_num] == 1)
@@ -132,7 +149,7 @@ int makedirnm(char *name_of_dir, char *path, int client_socket)
 
     if (status == SUCCESS)
     {
-        insert_into_tree_new(new_path, 1, ans.ss_ip, ans.ss_port, ans.client_port, ans.s2s_port, 1);
+        insert_into_tree_new(new_path, 1, copy.ss_ip, copy.ss_port, copy.client_port, copy.s2s_port, 1);
     }
     else
     {

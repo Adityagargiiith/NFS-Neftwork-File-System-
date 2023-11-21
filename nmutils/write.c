@@ -5,9 +5,25 @@ extern int failure[100000];
 extern struct replica_info backup_arr[100];
 extern struct data_of_ss initial_data[100];
 
+extern lru_entry *head;
+
+
 int writenm(char *path, int client_soket)
 {
-    ss_info res = search_path_in_trie(path);
+    ss_info res;
+
+    ss_info cache_ans = find_in_cache(path);
+
+    if (cache_ans.ss_port != -5)
+    {
+        res = cache_ans;
+    }
+    else
+    {
+        res = search_path_in_trie(path);
+        add_to_cache(path, res);
+    }
+
     if (res.ss_port == -1)
     {
         int to_send = FILE_NOT_FOUND;

@@ -32,6 +32,14 @@ struct ss_info
 
 typedef struct ss_info ss_info;
 
+
+typedef struct lru_entry
+{
+    char *key;
+    ss_info value;
+    UT_hash_handle hh;
+} lru_entry;
+
 #define IS_DIR 1
 #define IS_FILE 0
 
@@ -45,6 +53,8 @@ void delete_subtree(struct tree_node *curr);
 int backupdir(ss_info sender_info1, ss_info receiver_info1, char *dir_path);
 int backup_file(ss_info sender_info1, ss_info reciever_info1, char *file_path);
 
+ss_info find_in_cache(char *key);
+void add_to_cache(char *key, ss_info value);
 
 extern struct tree_node *root;
 #endif

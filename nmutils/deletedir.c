@@ -2,7 +2,19 @@
 
 void deletedirnm(char* path, int client_socket_nm)
 {
-    ss_info ans =search_path_in_trie(path);
+    ss_info ans;
+
+    ss_info cache_ans = find_in_cache(path);
+
+    if (cache_ans.ss_port != -5)
+    {
+        ans = cache_ans;
+    }
+    else
+    {
+        ans = search_path_in_trie(path);
+        add_to_cache(path, ans);
+    }
 
     if(ans.ss_port==-1)
     {

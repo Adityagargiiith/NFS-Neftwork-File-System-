@@ -1,10 +1,29 @@
 #include "copyfile.h"
+#include "../storage_server.h"
+
+extern int failure[100000];
+extern struct replica_info backup_arr[100];
+extern struct data_of_ss initial_data[100];
 
 int copyfilenm(char *src, char *dest, int client_socket)
 {
     printf("Src: %s\n", src);
     printf("Dest: %s\n", dest);
-    ss_info ans = search_path_in_trie(src);
+    ss_info ans;
+
+    ss_info cache_ans = find_in_cache(src);
+
+    if (cache_ans.ss_port != -5)
+    {
+        ans = cache_ans;
+    }
+    else
+    {
+        ans = search_path_in_trie(src);
+        add_to_cache(src, ans);
+    }
+
+
     if (ans.ss_port == -1)
     {
         int status = SRC_NOT_FOUND;
@@ -26,8 +45,79 @@ int copyfilenm(char *src, char *dest, int client_socket)
         }
         return -1;
     }
+    ss_info copy1 = ans;
 
-    ss_info ans1 = search_path_in_trie(dest);
+    int curr_ss_num = -1;
+    for (int i = 0; i < 100; i++)
+    {
+        if (ans.ss_port == backup_arr[i].original_ss_port && strcmp(ans.ss_ip, backup_arr[i].original_ss_ip) == 0)
+        {
+            curr_ss_num = i;
+            break;
+        }
+    }
+
+    if (curr_ss_num == -1)
+    {
+        int status = SRC_NOT_FOUND;
+        if (send(client_socket, &status, sizeof(status), 0) == -1)
+        {
+            perror("Error in send() function call: ");
+            return -1;
+        }
+        return -1;
+    }
+
+    int temp;
+    if (failure[curr_ss_num] == 1)
+    {
+        if (failure[backup_arr[curr_ss_num].replica1_ss_index] == 1)
+        {
+            if (failure[backup_arr[curr_ss_num].replica2_ss_index] == 1)
+            {
+                int status = SS_DOWN;
+                if (send(client_socket, &status, sizeof(status), 0) == -1)
+                {
+                    perror("Error in send() function call: ");
+                    return -1;
+                }
+                return -1;
+            }
+            else
+            {
+                temp = backup_arr[curr_ss_num].replica2_ss_index;
+            }
+        }
+        else
+        {
+            temp = backup_arr[curr_ss_num].replica1_ss_index;
+        }
+
+        ans.ss_port = initial_data[temp].port_number;
+        ans.s2s_port = initial_data[temp].s2s_port;
+        ans.client_port = initial_data[temp].client_port;
+        strcpy(ans.ss_ip, initial_data[temp].ip);
+    }
+    else
+    {
+        temp = curr_ss_num;
+    }
+
+    ss_info ans1;
+
+    ss_info cache_ans1 = find_in_cache(dest);
+
+    if (cache_ans1.ss_port != -5)
+    {
+        ans1 = cache_ans1;
+    }
+    else
+    {
+        ans1 = search_path_in_trie(dest);
+        add_to_cache(dest, ans1);
+    }
+
+
     if (ans1.ss_port == -1)
     {
         int status = DEST_NOT_FOUND;
@@ -48,6 +138,63 @@ int copyfilenm(char *src, char *dest, int client_socket)
             return -1;
         }
         return -1;
+    }
+    ss_info copy2 = ans1;
+
+    int curr_ss_num1 = -1;
+    for (int i = 0; i < 100; i++)
+    {
+        if (ans1.ss_port == backup_arr[i].original_ss_port && strcmp(ans1.ss_ip, backup_arr[i].original_ss_ip) == 0)
+        {
+            curr_ss_num1 = i;
+            break;
+        }
+    }
+
+    if (curr_ss_num1 == -1)
+    {
+        int status = DEST_NOT_FOUND;
+        if (send(client_socket, &status, sizeof(status), 0) == -1)
+        {
+            perror("Error in send() function call: ");
+            return -1;
+        }
+        return -1;
+    }
+
+    int temp1;
+    if (failure[curr_ss_num1] == 1)
+    {
+        if (failure[backup_arr[curr_ss_num1].replica1_ss_index] == 1)
+        {
+            if (failure[backup_arr[curr_ss_num1].replica2_ss_index] == 1)
+            {
+                int status = SS_DOWN;
+                if (send(client_socket, &status, sizeof(status), 0) == -1)
+                {
+                    perror("Error in send() function call: ");
+                    return -1;
+                }
+                return -1;
+            }
+            else
+            {
+                temp1 = backup_arr[curr_ss_num1].replica2_ss_index;
+            }
+        }
+        else
+        {
+            temp1 = backup_arr[curr_ss_num1].replica1_ss_index;
+        }
+
+        ans1.ss_port = initial_data[temp1].port_number;
+        ans1.s2s_port = initial_data[temp1].s2s_port;
+        ans1.client_port = initial_data[temp1].client_port;
+        strcpy(ans1.ss_ip, initial_data[temp1].ip);
+    }
+    else
+    {
+        temp1 = curr_ss_num1;
     }
 
     if (ans.s2s_port == ans1.s2s_port && strcmp(ans.ss_ip, ans1.ss_ip) == 0)
@@ -100,6 +247,12 @@ int copyfilenm(char *src, char *dest, int client_socket)
                 perror("Error in send() function call: ");
                 return -1;
             }
+            char *new_path = (char *)malloc(sizeof(char) * (strlen(dest) + strlen(src) + 2));
+            strcpy(new_path, dest);
+            char *temp = strrchr(src, '/');
+            strcat(new_path, temp);
+            new_path[strlen(new_path)] = '\0';
+            insert_into_tree_new(new_path, 1, copy1.ss_ip, copy1.ss_port, copy1.client_port, copy1.s2s_port, 0);
             return SUCCESS;
         }
         else
@@ -222,6 +375,13 @@ int copyfilenm(char *src, char *dest, int client_socket)
             perror("Error in send() function call: ");
             return -1;
         }
+        char *new_path = (char *)malloc(sizeof(char) * (strlen(dest) + strlen(src) + 2));
+        strcpy(new_path, dest);
+        char *temp = strrchr(src, '/');
+        strcat(new_path, temp);
+        new_path[strlen(new_path)] = '\0';
+        insert_into_tree_new(new_path, 1, copy2.ss_ip, copy2.ss_port, copy2.client_port, copy2.s2s_port, 0);
+
         return SUCCESS;
     }
     else
