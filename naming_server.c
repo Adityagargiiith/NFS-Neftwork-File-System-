@@ -20,6 +20,7 @@ struct arg_struct
 };
 
 pthread_mutex_t mutex;
+pthread_mutex_t init_lock;
 
 void *ss_backup_update(void *)
 {
@@ -190,10 +191,13 @@ void *ss_backup_update(void *)
 
 int alive_socket;
 
+sem_t sem[1000];
+
 void *checkalive(void *arg)
 {
     pthread_detach(pthread_self());
     int ss_number = *((int *)arg);
+    sem_wait(&sem[ss_number]);
     int client_socket;
     struct sockaddr_in client_address;
     int client_address_length = sizeof(client_address);
@@ -205,6 +209,7 @@ void *checkalive(void *arg)
     }
 
     printf("Storage server Alive\n");
+    sem_post(&sem[ss_number + 1]);
 
     int prev_failure = 0;
 
@@ -221,7 +226,10 @@ void *checkalive(void *arg)
         {
             if (errno == EAGAIN || errno == EWOULDBLOCK)
             {
-                printf("Storage server %d is dead\n", ss_number);
+                if (prev_failure == 0)
+                {
+                    printf("Storage server with ip %s and port %d is dead\n", initial_data[ss_number].ip, initial_data[ss_number].port_number);
+                }
                 failure[ss_number] = 1;
                 prev_failure = 1;
                 sleep(1);
@@ -235,7 +243,10 @@ void *checkalive(void *arg)
         }
         else if (recv_success == 0)
         {
-            printf("Storage server %d is dead\n", ss_number);
+            if (prev_failure == 0)
+            {
+                printf("Storage server with ip %s and port %d is dead\n", initial_data[ss_number].ip, initial_data[ss_number].port_number);
+            }
             failure[ss_number] = 1;
             prev_failure = 1;
             sleep(1);
@@ -246,7 +257,12 @@ void *checkalive(void *arg)
             failure[ss_number] = 0;
             if (prev_failure == 1)
             {
-                printf("Storage server %d is alive\n", ss_number);
+                for (int i = 0; i < initial_data[ss_number].number_of_paths; i++)
+                {
+                    initial_data[ss_number].paths[i].backup_pending[0] = 1;
+                    initial_data[ss_number].paths[i].backup_pending[1] = 1;
+                }
+                backup_pending[ss_number] = 1;
                 prev_failure = 0;
             }
         }
@@ -465,10 +481,27 @@ void *client_req_handler(void *arg)
             strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path, new_path);
             initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file = 1;
             initial_data[ss_number_to_search].paths[curr_index_to_add].permissions = 1;
-            backup_pending[ss_number_to_search] = 1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[0] = 1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[1] = 1;
             initial_data[ss_number_to_search].number_of_paths++;
+            if (failure[ss_number_to_search] == 0)
+            {
+                initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[0] = 1;
+                initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[1] = 1;
+                backup_pending[ss_number_to_search] = 1;
+            }
+            else
+            {
+                if (failure[backup_arr[ss_number_to_search].replica1_ss_index] == 0)
+                {
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[0] = 1;
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[1] = 0;
+                }
+                else
+                {
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[0] = 0;
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[1] = 1;
+                }
+                recovery_pending[ss_number_to_search] = 1;
+            }
         }
     }
     else if (strcmp(token, "deletedir") == 0)
@@ -504,10 +537,27 @@ void *client_req_handler(void *arg)
             strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path, new_path);
             initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file = 0;
             initial_data[ss_number_to_search].paths[curr_index_to_add].permissions = 1;
-            backup_pending[ss_number_to_search] = 1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[0] = 1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[1] = 1;
             initial_data[ss_number_to_search].number_of_paths++;
+            if (failure[ss_number_to_search] == 0)
+            {
+                initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[0] = 1;
+                initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[1] = 1;
+                backup_pending[ss_number_to_search] = 1;
+            }
+            else
+            {
+                if (failure[backup_arr[ss_number_to_search].replica1_ss_index] == 0)
+                {
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[0] = 1;
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[1] = 0;
+                }
+                else
+                {
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[0] = 0;
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[1] = 1;
+                }
+                recovery_pending[ss_number_to_search] = 1;
+            }
         }
     }
     else if (strcmp(token, "deletefile") == 0)
@@ -542,10 +592,27 @@ void *client_req_handler(void *arg)
             strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path, new_path);
             initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file = 0;
             initial_data[ss_number_to_search].paths[curr_index_to_add].permissions = 1;
-            backup_pending[ss_number_to_search] = 1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[0] = 1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[1] = 1;
             initial_data[ss_number_to_search].number_of_paths++;
+            if (failure[ss_number_to_search] == 0)
+            {
+                initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[0] = 1;
+                initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[1] = 1;
+                backup_pending[ss_number_to_search] = 1;
+            }
+            else
+            {
+                if (failure[backup_arr[ss_number_to_search].replica1_ss_index] == 0)
+                {
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[0] = 1;
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[1] = 0;
+                }
+                else
+                {
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[0] = 0;
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[1] = 1;
+                }
+                recovery_pending[ss_number_to_search] = 1;
+            }
         }
     }
     else if (strcmp(token, "copydir") == 0)
@@ -568,10 +635,27 @@ void *client_req_handler(void *arg)
             strcpy(initial_data[ss_number_to_search].paths[curr_index_to_add].path, src);
             initial_data[ss_number_to_search].paths[curr_index_to_add].dir_or_file = 1;
             initial_data[ss_number_to_search].paths[curr_index_to_add].permissions = 1;
-            backup_pending[ss_number_to_search] = 1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[0] = 1;
-            initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[1] = 1;
             initial_data[ss_number_to_search].number_of_paths++;
+            if (failure[ss_number_to_search] == 0)
+            {
+                initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[0] = 1;
+                initial_data[ss_number_to_search].paths[curr_index_to_add].backup_pending[1] = 1;
+                backup_pending[ss_number_to_search] = 1;
+            }
+            else
+            {
+                if (failure[backup_arr[ss_number_to_search].replica1_ss_index] == 0)
+                {
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[0] = 1;
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[1] = 0;
+                }
+                else
+                {
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[0] = 0;
+                    initial_data[ss_number_to_search].paths[curr_index_to_add].recovery_pending[1] = 1;
+                }
+                recovery_pending[ss_number_to_search] = 1;
+            }
         }
     }
     else if (strcmp(token, "read") == 0)
@@ -677,6 +761,12 @@ void *client_thread(void *)
 
 int main()
 {
+    sem_init(&sem[0], 0, 1);
+    for (int i = 1; i < 1000; i++)
+    {
+        sem_init(&sem[i], 0, 0);
+    }
+    pthread_mutex_init(&init_lock, NULL);
     alive_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (alive_socket == -1)
     {

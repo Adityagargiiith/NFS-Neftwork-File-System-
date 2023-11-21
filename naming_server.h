@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <poll.h>
+#include "uthash.h"
 #include "errorcode.h"
 #include "nmutils/makedir.h"
 #include "nmutils/deletedir.h"
@@ -24,6 +25,7 @@
 #include "nmutils/read.h"
 #include "nmutils/write.h"
 #include "nmutils/backup.h"
+#include "nmutils/lru.h"
 
 #define CLIENT_PORT 51234
 #define SS_PORT 5572
