@@ -56,7 +56,7 @@ int main()
             }
             else if (strcmp(command, "list") == 0)
             {
-                list();
+                list(input);
             }
             else if (strcmp(command, "info") == 0)
             {
